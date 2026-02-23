@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     }
 
     const user = data.results[0];
-    const valid = await bcrypt.compare(password, user["Password Hash"]);
+    const valid = await bcrypt.compare(password, user["password_hashed"]);
 
     if (!valid) {
       return NextResponse.json(
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
 
     response.cookies.set("session_user", JSON.stringify({
       id: user.id,
-      fullName: user["Full Name"],
+      fullName: user["username"],
       email: user["Email"],
       role: user["Role"],
     }), {
