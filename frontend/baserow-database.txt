@@ -1,0 +1,1223 @@
+Introduction
+Authentication
+repositories table (id: 1613)
+users table (id: 1614)
+File uploads
+List tables
+Filters
+HTTP Errors
+Introduction
+The code-space database provides an easy way to integrate the data with any external system. The API follows REST semantics, uses JSON to encode objects and relies on standard HTTP codes, machine and human readable errors to signal operation outcomes.
+
+This documentation is generated automatically based on the tables and fields that are in your database. If you make changes to your database, table or fields it could be that the API interface has also changed. Therefore, make sure that you update your API implementation accordingly.
+
+The ID of this database is: 407
+JavaScript example API client: axios
+Python example API client: requests
+
+Authentication
+Baserow uses a simple token based authentication. You need to generate at least one database token in your settings to use the endpoints described below. It is possible to give create, read, update and delete permissions up until table level per token. You can authenticate to the API by providing your token in the HTTP authorization bearer token header. All API requests must be authenticated and made over HTTPS.
+
+Request sample
+Copy
+cURL
+curl \
+-H "Authorization: Token YOUR_DATABASE_TOKEN" \
+"https://dayta.intelligentb2b.com"
+repositories table
+The ID of this table is: 1613
+
+Fields
+Each row in the repositories table contains the following fields.
+
+ID	Name	Type	Compatible filters
+field_15997	Name	string	equalnot_equalcontainscontains_notcontains_worddoesnt_contain_wordlength_is_lower_thanemptynot_empty
+Accepts single line text.
+field_15998	Notes	string	equalnot_equalcontainscontains_notcontains_worddoesnt_contain_wordlength_is_lower_thanemptynot_empty
+Accepts multi line text. If the rich text formatting is enabled, you can use markdown to format the text.
+field_15999	Active	boolean	booleanemptynot_empty
+Accepts a boolean.
+List fields
+To list fields of the repositories table a GET request has to be made to the repositories fields endpoint. It's only possible to list the fields if the database token has read, create or update permissions.
+
+Result field properties
+id
+integer
+Field primary key. Can be used to generate the database column name by adding field_ prefix.
+
+name
+string
+Field name.
+table_id
+integer
+Related table id.
+order
+integer
+Field order in table. 0 for the first field.
+primary
+boolean
+Indicates if the field is a primary field. If true the field cannot be deleted and the value should represent the whole row.
+
+type
+string
+Type defined for this field.
+read_only
+boolean
+Indicates whether the field is a read only field. If true, it's not possible to update the cell value.
+description
+string
+Field description
+Some extra properties are not described here because they are type specific.
+
+Copy
+GET
+https://dayta.intelligentb2b.com/api/database/fields/table/1613/
+Request sample
+Copy
+cURL
+curl \
+-X GET \
+-H "Authorization: Token YOUR_DATABASE_TOKEN" \
+"https://dayta.intelligentb2b.com/api/database/fields/table/1613/"
+Response sample
+Copy
+[
+    {
+        "id": 15997,
+        "table_id": 1613,
+        "name": "Name",
+        "order": 0,
+        "type": "text",
+        "primary": true,
+        "read_only": false,
+        "description": "A sample description"
+    },
+    {
+        "id": 15998,
+        "table_id": 1613,
+        "name": "Notes",
+        "order": 1,
+        "type": "long_text",
+        "primary": false,
+        "read_only": false,
+        "description": "A sample description"
+    },
+    {
+        "id": 15999,
+        "table_id": 1613,
+        "name": "Active",
+        "order": 2,
+        "type": "boolean",
+        "primary": false,
+        "read_only": false,
+        "description": "A sample description"
+    }
+]
+List rows
+To list rows in the repositories table a GET request has to be made to the repositories endpoint. The response is paginated and by default the first page is returned. The correct page can be fetched by providing the page and size query parameters.
+
+Query parameters
+page
+optional
+integer
+Default: 1
+Defines which page of rows should be returned.
+size
+optional
+integer
+Default: 100
+Defines how many rows should be returned per page.
+user_field_names
+optional
+any
+When the user_field_names GET parameter is provided and its value is one of the following: y, yes, true, t, on, 1, or empty string, the field names returned by this endpoint will be the actual names of the fields.
+
+If the user_field_names GET parameter is not provided, or if it does not match any of the above values, then all returned field names will be field_ followed by the id of the field. For example field_1 refers to the field with an id of 1.
+
+Additionally when user_field_names is set then the behaviour of the other GET parameters order_by, include and exclude changes. They instead expect comma separated lists of the actual field names instead.
+
+search
+optional
+string
+Default: ''
+If provided only rows with data that matches the search query are going to be returned.
+order_by
+optional
+string
+Default: 'id'
+Optionally the rows can be ordered by fields separated by comma. By default or if prepended with a '+' a field is ordered in ascending (A-Z) order, but by prepending the field with a '-' it can be ordered descending (Z-A).
+
+With user_field_names:
+order_by should be a comma separated list of the field names to order by. For example if you provide the following GET parameter order_by=My Field,-My Field 2 the rows will ordered by the field called My Field in ascending order. If some fields have the same value, that subset will be ordered by the field called My Field 2 in descending order.
+
+Ensure fields with names starting with a + or - are explicitly prepended with another + or -. E.g +-Name.
+
+The name of fields containing commas must be surrounded by quotes: "Name ,". If the field names contain quotes, then they must be escaped using the \ character. Eg: Name \".
+
+Without user_field_names:
+order_by should be a comma separated list of field_ followed by the id of the field to order by. For example if you provide the following GET parameter order_by=field_1,-field_2 the rows will ordered by field_1 in ascending order. If some fields have the same value, that subset will be ordered by field_2 in descending order.
+
+filters
+optional
+JSON
+Rows can optionally be filtered using the same view filters that are available for the views. This parameter accepts a JSON serialized string containing the filter tree to apply to this view. The filter tree is a nested structure containing the filters that need to be applied.
+
+With user_field_names:
+An example of a valid filter tree is the following: {"filter_type": "AND", "filters": [{"field": "Name", "type": "equal", "value": "test"}]}.
+
+Without user_field_names:
+For example, if you optionally provide the following GET parameter: {"filter_type": "AND", "filters": [{"field": 1, "type": "equal", "value": "test"}]}
+
+Please note that if this parameter is provided, all other filter__{field}__{filter} will be ignored, as well as the filter_type parameter.
+
+filter__{field}__{filter}
+optional
+string
+Rows can optionally be filtered using the same view filters that are available for the views. Multiple filters may be applied if they follow the same format. The field and filter variables indicate how and where to apply the filter, respectively.
+
+With user_field_names:
+For example, if you optionally provide the following GET parameter: filter__Name__equal=test, only rows where the value of Name equals 'test' will be returned. This method is backwards compatible and will check against field_id if it fails on the name.
+
+Without user_field_names:
+For example, if you optionally provide the following GET parameter: filter__field_1__equal=test, only rows where the value of field_1 equals 'test' will be returned.
+
+Please note that if the filters parameter is provided, this parameter will be ignored.
+
+A list of all filters can be found here.
+filter_type
+optional
+string
+Default: 'AND'
+AND: Indicates that the rows must match all the provided filters.
+OR: Indicates that the rows only have to match one of the filters.
+This works only if two or more filters are provided.
+
+include
+optional
+string
+All the fields are included in the response by default. You can select a subset of fields to include by providing the include query parameter.
+
+With user_field_names:
+include should be a comma separated list of field names to be included in results. For example if you provide the following GET param: include=My Field,-My Field 2 then only those fields will be included (unless they are explicitly excluded).
+
+The name of fields containing commas must be surrounded by quotes: "Name ,". If the field names contain quotes, then they must be escaped using the \ character. Eg: Name \".
+
+Without user_field_names:
+include should be a comma separated list of field_ followed by the id of the field to include in the results. For example: If you provide the following GET parameter include=field_1,field_2 then the fields with id 1 and id 2 then only those fields will be included (unless they are explicitly excluded).
+
+exclude
+optional
+string
+All the fields are included in the response by default. You can select a subset of fields to exclude by providing the exclude query parameter.
+
+With user_field_names:
+exclude should be a comma separated list of field names to be excluded from the results. For example if you provide the following GET param: exclude=My Field,-My Field 2 then those fields will be excluded.
+
+The name of fields containing commas must be surrounded by quotes: "Name ,". If the field names contain quotes, then they must be escaped using the \ character. Eg: Name \".
+
+Without user_field_names:
+exclude should be a comma separated list of field_ followed by the id of the field to exclude from the results. For example: If you provide the following GET parameter exclude=field_1,field_2 then the fields with id 1 and id 2 will be excluded.
+
+view_id
+optional
+integer
+By default non of the filters and sorts outside of the ones defined in the query parameters are applied. You can add the filters and sorts of a view by providing its id in the view_id GET parameter. For example if you provide the following GET parameter view_id=1 then the filters and sorts defined in the view with id 1 will be applied. You can find the view_id in the context menu of any given view. It is the number in brackets behind the view name.
+
+With filter__{field}__{filter}
+Both the filter provided in the query parameter and the filters defined in the view will be applied.
+
+With order_by
+If order_by is provided then the sort defined in the view will be ignored.
+
+{link_row_field}__join
+optional
+string
+Makes it possible to request a lookup of field values from a target table through existing link row fields. The parameter name has to be the name of an existing link row field, followed by __join. The value should be a list of field names for which we want to lookup additional values. You can provide one or multiple target fields. It is not possible to lookup a value of a link row field in the target table.
+
+With user_field_names:
+join should be a comma separated list of field names to be included in results. For example: If you provide the following GET parameter LinkRowField__join=MyField,MyField2 then the values of MyField and My Field2 in the table linked by LinkRowField will be included in the response .
+
+Without user_field_names:
+join should be a comma separated list of field_ followed by the id of the field to include in the results. For example: If you provide the following GET parameter field_1__join=field_2,field_3 then the values of field_2 and field_3 in the table linked by field_1 will be included in the response.
+
+Copy
+GET
+https://dayta.intelligentb2b.com/api/database/rows/table/1613/?user_field_names=true
+Request sample
+Copy
+cURL
+User field names
+curl \
+-X GET \
+-H "Authorization: Token YOUR_DATABASE_TOKEN" \
+"https://dayta.intelligentb2b.com/api/database/rows/table/1613/?user_field_names=true"
+Response sample
+Copy
+field_15997field_15998field_15999
+{
+    "count": 1024,
+    "next": "https://dayta.intelligentb2b.com/api/database/rows/table/1613/?page=2",
+    "previous": null,
+    "results": [
+        {
+            "id": 0,
+            "order": "1.00000000000000000000",
+            "Name": "string",
+            "Notes": "string",
+            "Active": true
+        }
+    ]
+}
+Get row
+Fetch a single repositories row.
+
+Path parameters
+row_id
+integer
+The unique identifier of the row that is requested.
+Query parameters
+user_field_names
+optional
+any
+When the user_field_names GET parameter is provided and its value is one of the following: y, yes, true, t, on, 1, or empty string, the field names returned by this endpoint will be the actual names of the fields.
+
+If the user_field_names GET parameter is not provided, or if it does not match any of the above values, then all returned field names will be field_ followed by the id of the field. For example field_1 refers to the field with an id of 1.
+
+Copy
+GET
+https://dayta.intelligentb2b.com/api/database/rows/table/1613/{row_id}/?user_field_names=true
+Request sample
+Copy
+cURL
+User field names
+curl \
+-X GET \
+-H "Authorization: Token YOUR_DATABASE_TOKEN" \
+"https://dayta.intelligentb2b.com/api/database/rows/table/1613/{row_id}/?user_field_names=true"
+Response sample
+Copy
+field_15997field_15998field_15999
+{
+    "id": 0,
+    "order": "1.00000000000000000000",
+    "Name": "string",
+    "Notes": "string",
+    "Active": true
+}
+Create row
+batch mode
+Create a new repositories row.
+
+Query parameters
+user_field_names
+optional
+any
+When the user_field_names GET parameter is provided and its value is one of the following: y, yes, true, t, on, 1, or empty string, the field names returned by this endpoint will be the actual names of the fields.
+
+If the user_field_names GET parameter is not provided, or if it does not match any of the above values, then all returned field names will be field_ followed by the id of the field. For example field_1 refers to the field with an id of 1.
+
+before
+optional
+integer
+If provided then the newly created row will be positioned before the row with the provided id.
+send_webhook_events
+optional
+any
+A flag query parameter that triggers webhooks after the operation, if set to y, yes, true, t, on, 1, or left empty. Defaults to true
+
+Request body schema
+Name field_15997
+optional
+string
+Accepts single line text.
+Notes field_15998
+optional
+string
+Accepts multi line text. If the rich text formatting is enabled, you can use markdown to format the text.
+Active field_15999
+optional
+boolean
+Accepts a boolean.
+Copy
+POST
+https://dayta.intelligentb2b.com/api/database/rows/table/1613/?user_field_names=true
+Request sample
+Copy
+cURL
+User field names
+field_15997field_15998field_15999
+curl \
+-X POST \
+-H "Authorization: Token YOUR_DATABASE_TOKEN" \
+-H "Content-Type: application/json" \
+"https://dayta.intelligentb2b.com/api/database/rows/table/1613/?user_field_names=true" \
+--data '{
+    "Name": "string",
+    "Notes": "string",
+    "Active": true
+}'
+Response sample
+Copy
+field_15997field_15998field_15999
+{
+    "id": 0,
+    "order": "1.00000000000000000000",
+    "Name": "string",
+    "Notes": "string",
+    "Active": true
+}
+Update row
+batch mode
+Updates an existing repositories row.
+
+Path parameters
+row_id
+integer
+The unique identifier of the row that needs to be updated.
+Query parameters
+user_field_names
+optional
+any
+When the user_field_names GET parameter is provided and its value is one of the following: y, yes, true, t, on, 1, or empty string, the field names returned by this endpoint will be the actual names of the fields.
+
+If the user_field_names GET parameter is not provided, or if it does not match any of the above values, then all returned field names will be field_ followed by the id of the field. For example field_1 refers to the field with an id of 1.
+
+send_webhook_events
+optional
+any
+A flag query parameter that triggers webhooks after the operation, if set to y, yes, true, t, on, 1, or left empty. Defaults to true
+
+Request body schema
+Name field_15997
+optional
+string
+Accepts single line text.
+Notes field_15998
+optional
+string
+Accepts multi line text. If the rich text formatting is enabled, you can use markdown to format the text.
+Active field_15999
+optional
+boolean
+Accepts a boolean.
+Copy
+PATCH
+https://dayta.intelligentb2b.com/api/database/rows/table/1613/{row_id}/?user_field_names=true
+Request sample
+Copy
+cURL
+User field names
+field_15997field_15998field_15999
+curl \
+-X PATCH \
+-H "Authorization: Token YOUR_DATABASE_TOKEN" \
+-H "Content-Type: application/json" \
+"https://dayta.intelligentb2b.com/api/database/rows/table/1613/{row_id}/?user_field_names=true" \
+--data '{
+    "Name": "string",
+    "Notes": "string",
+    "Active": true
+}'
+Response sample
+Copy
+field_15997field_15998field_15999
+{
+    "id": 0,
+    "order": "1.00000000000000000000",
+    "Name": "string",
+    "Notes": "string",
+    "Active": true
+}
+Move row
+Moves an existing repositories row before another row. If no before_id is provided, then the row will be moved to the end of the table.
+
+Path parameters
+row_id
+integer
+Moves the row related to the value.
+Query parameters
+user_field_names
+optional
+any
+When the user_field_names GET parameter is provided and its value is one of the following: y, yes, true, t, on, 1, or empty string, the field names returned by this endpoint will be the actual names of the fields.
+
+If the user_field_names GET parameter is not provided, or if it does not match any of the above values, then all returned field names will be field_ followed by the id of the field. For example field_1 refers to the field with an id of 1.
+
+before_id
+optional
+integer
+Moves the row related to the given `row_id` before the row related to the provided value. If not provided, then the row will be moved to the end.
+send_webhook_events
+optional
+any
+A flag query parameter that triggers webhooks after the operation, if set to y, yes, true, t, on, 1, or left empty. Defaults to true
+
+Copy
+PATCH
+https://dayta.intelligentb2b.com/api/database/rows/table/1613/{row_id}/move/?user_field_names=true
+Request sample
+Copy
+cURL
+User field names
+curl \
+-X PATCH \
+-H "Authorization: Token YOUR_DATABASE_TOKEN" \
+"https://dayta.intelligentb2b.com/api/database/rows/table/1613/{row_id}/move/?user_field_names=true"
+Response sample
+Copy
+field_15997field_15998field_15999
+{
+    "id": 0,
+    "order": "1.00000000000000000000",
+    "Name": "string",
+    "Notes": "string",
+    "Active": true
+}
+Delete row
+batch mode
+Deletes an existing repositories row.
+
+Path parameters
+row_id
+integer
+The unique identifier of the row that needs to be deleted.
+Query parameters
+send_webhook_events
+optional
+any
+A flag query parameter that triggers webhooks after the operation, if set to y, yes, true, t, on, 1, or left empty. Defaults to true
+
+Copy
+DELETE
+https://dayta.intelligentb2b.com/api/database/rows/table/1613/{row_id}/
+Request sample
+Copy
+cURL
+curl \
+-X DELETE \
+-H "Authorization: Token YOUR_DATABASE_TOKEN" \
+"https://dayta.intelligentb2b.com/api/database/rows/table/1613/{row_id}/"
+users table
+The ID of this table is: 1614
+
+Fields
+Each row in the users table contains the following fields.
+
+ID	Name	Type	Compatible filters
+field_16000	username	string	equalnot_equalcontainscontains_notcontains_worddoesnt_contain_wordlength_is_lower_thanemptynot_empty
+Accepts single line text.
+field_16002	Active	boolean	booleanemptynot_empty
+Accepts a boolean.
+field_16004	Email	string	equalnot_equalcontainscontains_notcontains_worddoesnt_contain_wordlength_is_lower_thanemptynot_empty
+Accepts a string that must be an email address.
+field_16005	password_hashed	string	equalnot_equalcontainscontains_notcontains_worddoesnt_contain_wordlength_is_lower_thanemptynot_empty
+Accepts multi line text. If the rich text formatting is enabled, you can use markdown to format the text.
+List fields
+To list fields of the users table a GET request has to be made to the users fields endpoint. It's only possible to list the fields if the database token has read, create or update permissions.
+
+Result field properties
+id
+integer
+Field primary key. Can be used to generate the database column name by adding field_ prefix.
+
+name
+string
+Field name.
+table_id
+integer
+Related table id.
+order
+integer
+Field order in table. 0 for the first field.
+primary
+boolean
+Indicates if the field is a primary field. If true the field cannot be deleted and the value should represent the whole row.
+
+type
+string
+Type defined for this field.
+read_only
+boolean
+Indicates whether the field is a read only field. If true, it's not possible to update the cell value.
+description
+string
+Field description
+Some extra properties are not described here because they are type specific.
+
+Copy
+GET
+https://dayta.intelligentb2b.com/api/database/fields/table/1614/
+Request sample
+Copy
+cURL
+curl \
+-X GET \
+-H "Authorization: Token YOUR_DATABASE_TOKEN" \
+"https://dayta.intelligentb2b.com/api/database/fields/table/1614/"
+Response sample
+Copy
+[
+    {
+        "id": 16000,
+        "table_id": 1614,
+        "name": "username",
+        "order": 0,
+        "type": "text",
+        "primary": true,
+        "read_only": false,
+        "description": "A sample description"
+    },
+    {
+        "id": 16002,
+        "table_id": 1614,
+        "name": "Active",
+        "order": 2,
+        "type": "boolean",
+        "primary": false,
+        "read_only": false,
+        "description": "A sample description"
+    },
+    {
+        "id": 16004,
+        "table_id": 1614,
+        "name": "Email",
+        "order": 3,
+        "type": "email",
+        "primary": false,
+        "read_only": false,
+        "description": "A sample description"
+    }
+]
+List rows
+To list rows in the users table a GET request has to be made to the users endpoint. The response is paginated and by default the first page is returned. The correct page can be fetched by providing the page and size query parameters.
+
+Query parameters
+page
+optional
+integer
+Default: 1
+Defines which page of rows should be returned.
+size
+optional
+integer
+Default: 100
+Defines how many rows should be returned per page.
+user_field_names
+optional
+any
+When the user_field_names GET parameter is provided and its value is one of the following: y, yes, true, t, on, 1, or empty string, the field names returned by this endpoint will be the actual names of the fields.
+
+If the user_field_names GET parameter is not provided, or if it does not match any of the above values, then all returned field names will be field_ followed by the id of the field. For example field_1 refers to the field with an id of 1.
+
+Additionally when user_field_names is set then the behaviour of the other GET parameters order_by, include and exclude changes. They instead expect comma separated lists of the actual field names instead.
+
+search
+optional
+string
+Default: ''
+If provided only rows with data that matches the search query are going to be returned.
+order_by
+optional
+string
+Default: 'id'
+Optionally the rows can be ordered by fields separated by comma. By default or if prepended with a '+' a field is ordered in ascending (A-Z) order, but by prepending the field with a '-' it can be ordered descending (Z-A).
+
+With user_field_names:
+order_by should be a comma separated list of the field names to order by. For example if you provide the following GET parameter order_by=My Field,-My Field 2 the rows will ordered by the field called My Field in ascending order. If some fields have the same value, that subset will be ordered by the field called My Field 2 in descending order.
+
+Ensure fields with names starting with a + or - are explicitly prepended with another + or -. E.g +-Name.
+
+The name of fields containing commas must be surrounded by quotes: "Name ,". If the field names contain quotes, then they must be escaped using the \ character. Eg: Name \".
+
+Without user_field_names:
+order_by should be a comma separated list of field_ followed by the id of the field to order by. For example if you provide the following GET parameter order_by=field_1,-field_2 the rows will ordered by field_1 in ascending order. If some fields have the same value, that subset will be ordered by field_2 in descending order.
+
+filters
+optional
+JSON
+Rows can optionally be filtered using the same view filters that are available for the views. This parameter accepts a JSON serialized string containing the filter tree to apply to this view. The filter tree is a nested structure containing the filters that need to be applied.
+
+With user_field_names:
+An example of a valid filter tree is the following: {"filter_type": "AND", "filters": [{"field": "Name", "type": "equal", "value": "test"}]}.
+
+Without user_field_names:
+For example, if you optionally provide the following GET parameter: {"filter_type": "AND", "filters": [{"field": 1, "type": "equal", "value": "test"}]}
+
+Please note that if this parameter is provided, all other filter__{field}__{filter} will be ignored, as well as the filter_type parameter.
+
+filter__{field}__{filter}
+optional
+string
+Rows can optionally be filtered using the same view filters that are available for the views. Multiple filters may be applied if they follow the same format. The field and filter variables indicate how and where to apply the filter, respectively.
+
+With user_field_names:
+For example, if you optionally provide the following GET parameter: filter__Name__equal=test, only rows where the value of Name equals 'test' will be returned. This method is backwards compatible and will check against field_id if it fails on the name.
+
+Without user_field_names:
+For example, if you optionally provide the following GET parameter: filter__field_1__equal=test, only rows where the value of field_1 equals 'test' will be returned.
+
+Please note that if the filters parameter is provided, this parameter will be ignored.
+
+A list of all filters can be found here.
+filter_type
+optional
+string
+Default: 'AND'
+AND: Indicates that the rows must match all the provided filters.
+OR: Indicates that the rows only have to match one of the filters.
+This works only if two or more filters are provided.
+
+include
+optional
+string
+All the fields are included in the response by default. You can select a subset of fields to include by providing the include query parameter.
+
+With user_field_names:
+include should be a comma separated list of field names to be included in results. For example if you provide the following GET param: include=My Field,-My Field 2 then only those fields will be included (unless they are explicitly excluded).
+
+The name of fields containing commas must be surrounded by quotes: "Name ,". If the field names contain quotes, then they must be escaped using the \ character. Eg: Name \".
+
+Without user_field_names:
+include should be a comma separated list of field_ followed by the id of the field to include in the results. For example: If you provide the following GET parameter include=field_1,field_2 then the fields with id 1 and id 2 then only those fields will be included (unless they are explicitly excluded).
+
+exclude
+optional
+string
+All the fields are included in the response by default. You can select a subset of fields to exclude by providing the exclude query parameter.
+
+With user_field_names:
+exclude should be a comma separated list of field names to be excluded from the results. For example if you provide the following GET param: exclude=My Field,-My Field 2 then those fields will be excluded.
+
+The name of fields containing commas must be surrounded by quotes: "Name ,". If the field names contain quotes, then they must be escaped using the \ character. Eg: Name \".
+
+Without user_field_names:
+exclude should be a comma separated list of field_ followed by the id of the field to exclude from the results. For example: If you provide the following GET parameter exclude=field_1,field_2 then the fields with id 1 and id 2 will be excluded.
+
+view_id
+optional
+integer
+By default non of the filters and sorts outside of the ones defined in the query parameters are applied. You can add the filters and sorts of a view by providing its id in the view_id GET parameter. For example if you provide the following GET parameter view_id=1 then the filters and sorts defined in the view with id 1 will be applied. You can find the view_id in the context menu of any given view. It is the number in brackets behind the view name.
+
+With filter__{field}__{filter}
+Both the filter provided in the query parameter and the filters defined in the view will be applied.
+
+With order_by
+If order_by is provided then the sort defined in the view will be ignored.
+
+{link_row_field}__join
+optional
+string
+Makes it possible to request a lookup of field values from a target table through existing link row fields. The parameter name has to be the name of an existing link row field, followed by __join. The value should be a list of field names for which we want to lookup additional values. You can provide one or multiple target fields. It is not possible to lookup a value of a link row field in the target table.
+
+With user_field_names:
+join should be a comma separated list of field names to be included in results. For example: If you provide the following GET parameter LinkRowField__join=MyField,MyField2 then the values of MyField and My Field2 in the table linked by LinkRowField will be included in the response .
+
+Without user_field_names:
+join should be a comma separated list of field_ followed by the id of the field to include in the results. For example: If you provide the following GET parameter field_1__join=field_2,field_3 then the values of field_2 and field_3 in the table linked by field_1 will be included in the response.
+
+Copy
+GET
+https://dayta.intelligentb2b.com/api/database/rows/table/1614/?user_field_names=true
+Request sample
+Copy
+cURL
+User field names
+curl \
+-X GET \
+-H "Authorization: Token YOUR_DATABASE_TOKEN" \
+"https://dayta.intelligentb2b.com/api/database/rows/table/1614/?user_field_names=true"
+Response sample
+Copy
+field_16000field_16002field_16004field_16005
+{
+    "count": 1024,
+    "next": "https://dayta.intelligentb2b.com/api/database/rows/table/1614/?page=2",
+    "previous": null,
+    "results": [
+        {
+            "id": 0,
+            "order": "1.00000000000000000000",
+            "username": "string",
+            "Active": true,
+            "Email": "example@baserow.io",
+            "password_hashed": "string"
+        }
+    ]
+}
+Get row
+Fetch a single users row.
+
+Path parameters
+row_id
+integer
+The unique identifier of the row that is requested.
+Query parameters
+user_field_names
+optional
+any
+When the user_field_names GET parameter is provided and its value is one of the following: y, yes, true, t, on, 1, or empty string, the field names returned by this endpoint will be the actual names of the fields.
+
+If the user_field_names GET parameter is not provided, or if it does not match any of the above values, then all returned field names will be field_ followed by the id of the field. For example field_1 refers to the field with an id of 1.
+
+Copy
+GET
+https://dayta.intelligentb2b.com/api/database/rows/table/1614/{row_id}/?user_field_names=true
+Request sample
+Copy
+cURL
+User field names
+curl \
+-X GET \
+-H "Authorization: Token YOUR_DATABASE_TOKEN" \
+"https://dayta.intelligentb2b.com/api/database/rows/table/1614/{row_id}/?user_field_names=true"
+Response sample
+Copy
+field_16000field_16002field_16004field_16005
+{
+    "id": 0,
+    "order": "1.00000000000000000000",
+    "username": "string",
+    "Active": true,
+    "Email": "example@baserow.io",
+    "password_hashed": "string"
+}
+Create row
+batch mode
+Create a new users row.
+
+Query parameters
+user_field_names
+optional
+any
+When the user_field_names GET parameter is provided and its value is one of the following: y, yes, true, t, on, 1, or empty string, the field names returned by this endpoint will be the actual names of the fields.
+
+If the user_field_names GET parameter is not provided, or if it does not match any of the above values, then all returned field names will be field_ followed by the id of the field. For example field_1 refers to the field with an id of 1.
+
+before
+optional
+integer
+If provided then the newly created row will be positioned before the row with the provided id.
+send_webhook_events
+optional
+any
+A flag query parameter that triggers webhooks after the operation, if set to y, yes, true, t, on, 1, or left empty. Defaults to true
+
+Request body schema
+username field_16000
+optional
+string
+Accepts single line text.
+Active field_16002
+optional
+boolean
+Accepts a boolean.
+Email field_16004
+optional
+string
+Accepts a string that must be an email address.
+password_hashed field_16005
+optional
+string
+Accepts multi line text. If the rich text formatting is enabled, you can use markdown to format the text.
+Copy
+POST
+https://dayta.intelligentb2b.com/api/database/rows/table/1614/?user_field_names=true
+Request sample
+Copy
+cURL
+User field names
+field_16000field_16002field_16004field_16005
+curl \
+-X POST \
+-H "Authorization: Token YOUR_DATABASE_TOKEN" \
+-H "Content-Type: application/json" \
+"https://dayta.intelligentb2b.com/api/database/rows/table/1614/?user_field_names=true" \
+--data '{
+    "username": "string",
+    "Active": true,
+    "Email": "example@baserow.io",
+    "password_hashed": "string"
+}'
+Response sample
+Copy
+field_16000field_16002field_16004field_16005
+{
+    "id": 0,
+    "order": "1.00000000000000000000",
+    "username": "string",
+    "Active": true,
+    "Email": "example@baserow.io",
+    "password_hashed": "string"
+}
+Update row
+batch mode
+Updates an existing users row.
+
+Path parameters
+row_id
+integer
+The unique identifier of the row that needs to be updated.
+Query parameters
+user_field_names
+optional
+any
+When the user_field_names GET parameter is provided and its value is one of the following: y, yes, true, t, on, 1, or empty string, the field names returned by this endpoint will be the actual names of the fields.
+
+If the user_field_names GET parameter is not provided, or if it does not match any of the above values, then all returned field names will be field_ followed by the id of the field. For example field_1 refers to the field with an id of 1.
+
+send_webhook_events
+optional
+any
+A flag query parameter that triggers webhooks after the operation, if set to y, yes, true, t, on, 1, or left empty. Defaults to true
+
+Request body schema
+username field_16000
+optional
+string
+Accepts single line text.
+Active field_16002
+optional
+boolean
+Accepts a boolean.
+Email field_16004
+optional
+string
+Accepts a string that must be an email address.
+password_hashed field_16005
+optional
+string
+Accepts multi line text. If the rich text formatting is enabled, you can use markdown to format the text.
+Copy
+PATCH
+https://dayta.intelligentb2b.com/api/database/rows/table/1614/{row_id}/?user_field_names=true
+Request sample
+Copy
+cURL
+User field names
+field_16000field_16002field_16004field_16005
+curl \
+-X PATCH \
+-H "Authorization: Token YOUR_DATABASE_TOKEN" \
+-H "Content-Type: application/json" \
+"https://dayta.intelligentb2b.com/api/database/rows/table/1614/{row_id}/?user_field_names=true" \
+--data '{
+    "username": "string",
+    "Active": true,
+    "Email": "example@baserow.io",
+    "password_hashed": "string"
+}'
+Response sample
+Copy
+field_16000field_16002field_16004field_16005
+{
+    "id": 0,
+    "order": "1.00000000000000000000",
+    "username": "string",
+    "Active": true,
+    "Email": "example@baserow.io",
+    "password_hashed": "string"
+}
+Move row
+Moves an existing users row before another row. If no before_id is provided, then the row will be moved to the end of the table.
+
+Path parameters
+row_id
+integer
+Moves the row related to the value.
+Query parameters
+user_field_names
+optional
+any
+When the user_field_names GET parameter is provided and its value is one of the following: y, yes, true, t, on, 1, or empty string, the field names returned by this endpoint will be the actual names of the fields.
+
+If the user_field_names GET parameter is not provided, or if it does not match any of the above values, then all returned field names will be field_ followed by the id of the field. For example field_1 refers to the field with an id of 1.
+
+before_id
+optional
+integer
+Moves the row related to the given `row_id` before the row related to the provided value. If not provided, then the row will be moved to the end.
+send_webhook_events
+optional
+any
+A flag query parameter that triggers webhooks after the operation, if set to y, yes, true, t, on, 1, or left empty. Defaults to true
+
+Copy
+PATCH
+https://dayta.intelligentb2b.com/api/database/rows/table/1614/{row_id}/move/?user_field_names=true
+Request sample
+Copy
+cURL
+User field names
+curl \
+-X PATCH \
+-H "Authorization: Token YOUR_DATABASE_TOKEN" \
+"https://dayta.intelligentb2b.com/api/database/rows/table/1614/{row_id}/move/?user_field_names=true"
+Response sample
+Copy
+field_16000field_16002field_16004field_16005
+{
+    "id": 0,
+    "order": "1.00000000000000000000",
+    "username": "string",
+    "Active": true,
+    "Email": "example@baserow.io",
+    "password_hashed": "string"
+}
+Delete row
+batch mode
+Deletes an existing users row.
+
+Path parameters
+row_id
+integer
+The unique identifier of the row that needs to be deleted.
+Query parameters
+send_webhook_events
+optional
+any
+A flag query parameter that triggers webhooks after the operation, if set to y, yes, true, t, on, 1, or left empty. Defaults to true
+
+Copy
+DELETE
+https://dayta.intelligentb2b.com/api/database/rows/table/1614/{row_id}/
+Request sample
+Copy
+cURL
+curl \
+-X DELETE \
+-H "Authorization: Token YOUR_DATABASE_TOKEN" \
+"https://dayta.intelligentb2b.com/api/database/rows/table/1614/{row_id}/"
+Upload file
+Uploads a file to Baserow by uploading the file contents directly. A file multipart is expected containing the file contents. The response can then be used to upload a file to a row.
+
+Request body schema
+file
+multipart
+The file multipart containing the file contents.
+
+Copy
+POST
+https://dayta.intelligentb2b.com/api/user-files/upload-file/
+Request sample
+Copy
+cURL
+curl \
+-X POST \
+-H "Authorization: Token YOUR_DATABASE_TOKEN" \ \
+-F file=@photo.png
+"https://dayta.intelligentb2b.com/api/user-files/upload-file/"
+Response sample
+Copy
+{
+    "url": "https://files.baserow.io/user_files/VXotniBOVm8tbstZkKsMKbj2Qg7KmPvn_39d354a76abe56baaf569ad87d0333f58ee4bf3eed368e3b9dc736fd18b09dfd.png",
+    "thumbnails": {
+        "tiny": {
+            "url": "https://files.baserow.io/media/thumbnails/tiny/VXotniBOVm8tbstZkKsMKbj2Qg7KmPvn_39d354a76abe56baaf569ad87d0333f58ee4bf3eed368e3b9dc736fd18b09dfd.png",
+            "width": 21,
+            "height": 21
+        },
+        "small": {
+            "url": "https://files.baserow.io/media/thumbnails/small/VXotniBOVm8tbstZkKsMKbj2Qg7KmPvn_39d354a76abe56baaf569ad87d0333f58ee4bf3eed368e3b9dc736fd18b09dfd.png",
+            "width": 48,
+            "height": 48
+        }
+    },
+    "name": "VXotniBOVm8tbstZkKsMKbj2Qg7KmPvn_39d354a76abe56baaf569ad87d0333f58ee4bf3eed368e3b9dc736fd18b09dfd.png",
+    "size": 229940,
+    "mime_type": "image/png",
+    "is_image": true,
+    "image_width": 1280,
+    "image_height": 585,
+    "uploaded_at": "2020-11-17T12:16:10.035234+00:00"
+}
+List all tables
+This endpoint only works in combination with the token authentication. It lists all the tables that the token has either create, read, update or delete access to.
+
+Copy
+GET
+https://dayta.intelligentb2b.com/api/database/tables/all-tables/
+Request sample
+Copy
+cURL
+curl \
+-X GET \
+-H "Authorization: Token YOUR_DATABASE_TOKEN" \
+"https://dayta.intelligentb2b.com/api/database/tables/all-tables/"
+Response sample
+Copy
+[
+    {
+        "id": 0,
+        "name": "string",
+        "order": 2147483647,
+        "database_id": 0
+    }
+]
+Upload file via URL
+Uploads a file to Baserow by downloading it from the provided URL. The response can then be used to upload a file to a row.
+
+Request body schema
+url
+string
+Uploads a file to Baserow by downloading it from the provided URL.
+
+Copy
+POST
+https://dayta.intelligentb2b.com/api/user-files/upload-via-url/
+Request sample
+Copy
+cURL
+curl \
+-X POST \
+-H "Authorization: Token YOUR_DATABASE_TOKEN" \
+-H "Content-Type: application/json" \
+"https://dayta.intelligentb2b.com/api/user-files/upload-via-url/" \
+--data '{
+    "url": "https://baserow.io/assets/photo.png"
+}'
+Response sample
+Copy
+{
+    "url": "https://files.baserow.io/user_files/VXotniBOVm8tbstZkKsMKbj2Qg7KmPvn_39d354a76abe56baaf569ad87d0333f58ee4bf3eed368e3b9dc736fd18b09dfd.png",
+    "thumbnails": {
+        "tiny": {
+            "url": "https://files.baserow.io/media/thumbnails/tiny/VXotniBOVm8tbstZkKsMKbj2Qg7KmPvn_39d354a76abe56baaf569ad87d0333f58ee4bf3eed368e3b9dc736fd18b09dfd.png",
+            "width": 21,
+            "height": 21
+        },
+        "small": {
+            "url": "https://files.baserow.io/media/thumbnails/small/VXotniBOVm8tbstZkKsMKbj2Qg7KmPvn_39d354a76abe56baaf569ad87d0333f58ee4bf3eed368e3b9dc736fd18b09dfd.png",
+            "width": 48,
+            "height": 48
+        }
+    },
+    "name": "VXotniBOVm8tbstZkKsMKbj2Qg7KmPvn_39d354a76abe56baaf569ad87d0333f58ee4bf3eed368e3b9dc736fd18b09dfd.png",
+    "size": 229940,
+    "mime_type": "image/png",
+    "is_image": true,
+    "image_width": 1280,
+    "image_height": 585,
+    "uploaded_at": "2020-11-17T12:16:10.035234+00:00"
+}
+Filters
+Filter	Example value	Full example
+equal	string	field is 'string'
+not_equal	string	field is not 'string'
+date_is	UTC??today	field is 'UTC??today'
+date_is_not	UTC??today	field is not 'UTC??today'
+date_is_before	UTC??today	field is before 'UTC??today'
+date_is_on_or_before	UTC??today	field is on or before 'UTC??today'
+date_is_after	UTC??today	field is after 'UTC??today'
+date_is_on_or_after	UTC??today	field is on or after 'UTC??today'
+date_is_within	UTC??today	field is within 'UTC??today'
+date_equal 
+deprecated	2020-01-01	field is date '2020-01-01'
+date_not_equal 
+deprecated	2020-01-01	field is not date '2020-01-01'
+date_equals_today 
+deprecated	UTC	field is today 'UTC'
+date_before_today 
+deprecated	UTC	field is before today 'UTC'
+date_after_today 
+deprecated	UTC	field is after today 'UTC'
+date_within_days 
+deprecated	Africa/Casablanca?1	field is within days 'Africa/Casablanca?1'
+date_within_weeks 
+deprecated	Africa/Casablanca?1	field is within weeks 'Africa/Casablanca?1'
+date_within_months 
+deprecated	Africa/Casablanca?1	field is within months 'Africa/Casablanca?1'
+date_equals_days_ago 
+deprecated	Africa/Casablanca?1	field is days ago 'Africa/Casablanca?1'
+date_equals_months_ago 
+deprecated	Africa/Casablanca?1	field is months ago 'Africa/Casablanca?1'
+date_equals_years_ago 
+deprecated	Africa/Casablanca?1	field is years ago 'Africa/Casablanca?1'
+date_equals_week 
+deprecated	UTC	field in this week 'UTC'
+date_equals_month 
+deprecated	UTC	field in this month 'UTC'
+date_equals_year 
+deprecated	UTC	field in this year 'UTC'
+date_equals_day_of_month	1	field day of month is '1'
+date_before 
+deprecated	2020-01-01	field is before date '2020-01-01'
+date_before_or_equal 
+deprecated	2020-01-01	field is before or same date '2020-01-01'
+date_after 
+deprecated	2020-01-01	field is after date '2020-01-01'
+date_after_or_equal 
+deprecated	2020-01-01	field is after or same date '2020-01-01'
+date_after_days_ago 
+deprecated	20	field is after days ago '20'
+has_empty_value	string	field has empty value 'string'
+has_not_empty_value	string	field doesn't have empty value 'string'
+has_value_equal	string	field has value equal 'string'
+has_not_value_equal	string	field doesn't have value equal 'string'
+has_value_contains	string	field has value contains 'string'
+has_not_value_contains	string	field doesn't have value contains 'string'
+has_value_contains_word	string	field has value contains word 'string'
+has_not_value_contains_word	string	field doesn't have value contains word 'string'
+has_value_length_is_lower_than	string	field has value length is lower than 'string'
+has_all_values_equal	string	field has all values equal 'string'
+has_any_select_option_equal	string	field has any select option equal 'string'
+has_none_select_option_equal	string	field doesn't have select option equal 'string'
+contains	string	field contains 'string'
+contains_not	string	field doesn't contain 'string'
+contains_word	string	field contains word 'string'
+doesnt_contain_word	string	field doesn't contain word 'string'
+filename_contains	string	field filename contains 'string'
+has_file_type	image | document	field has file type 'image | document'
+files_lower_than	2	field files lower than '2'
+length_is_lower_than	5	field length is lower than '5'
+higher_than	100	field higher than '100'
+higher_than_or_equal	100	field higher than or equal '100'
+lower_than	100	field lower than '100'
+lower_than_or_equal	100	field lower than or equal '100'
+is_even_and_whole	true	field is even and whole 'true'
+single_select_equal	1	field is '1'
+single_select_not_equal	1	field is not '1'
+single_select_is_any_of	1,2	field is any of '1,2'
+single_select_is_none_of	1,2	field is none of '1,2'
+boolean	true	field is 'true'
+link_row_has	1	field has '1'
+link_row_has_not	1	field doesn't have '1'
+link_row_contains	string	field contains 'string'
+link_row_not_contains	string	field doesn't contain 'string'
+multiple_select_has	1	field has any of '1'
+multiple_select_has_not	1	field doesn't have any of '1'
+multiple_collaborators_has	1	field has '1'
+multiple_collaborators_has_not	1	field doesn't have '1'
+empty		field is empty
+not_empty		field is not empty
+user_is	1	field is '1'
+user_is_not	1	field is not '1'
+has_value_higher	string	field has value higher than 'string'
+has_not_value_higher	string	field doesn't have value higher than 'string'
+has_value_higher_or_equal	string	field has value higher than or equal 'string'
+has_not_value_higher_or_equal	string	field doesn't have value higher than or equal 'string'
+has_value_lower	string	field has value lower than 'string'
+has_not_value_lower	string	field doesn't have value lower than 'string'
+has_value_lower_or_equal	string	field has value lower than or equal 'string'
+has_not_value_lower_or_equal	string	field doesn't have value lower than or equal 'string'
+has_date_equal	UTC??today	field has date equal 'UTC??today'
+has_not_date_equal	UTC??today	field doesn't have date equal 'UTC??today'
+has_date_before	UTC??today	field has date before 'UTC??today'
+has_not_date_before	UTC??today	field doesn't have date before 'UTC??today'
+has_date_on_or_before	UTC??today	field has date on or before 'UTC??today'
+has_not_date_on_or_before	UTC??today	field doesn't have date on or before 'UTC??today'
+has_date_after	UTC??today	field has date after 'UTC??today'
+has_not_date_after	UTC??today	field doesn't have date after 'UTC??today'
+has_date_on_or_after	UTC??today	field has date on or after 'UTC??today'
+has_not_date_on_or_after	UTC??today	field doesn't have date on or after 'UTC??today'
+has_date_within	UTC??today	field has date within 'UTC??today'
+has_not_date_within	UTC??today	field doesn't have date within 'UTC??today'
+HTTP Errors
+Error code	Name	Description
+200	Ok	Request completed successfully.
+400	Bad request	The request contains invalid values or the JSON could not be parsed.
+401	Unauthorized	When you try to access an endpoint without a valid database token.
+404	Not found	Row or table is not found.
+413	Request Entity Too Large	The request exceeded the maximum allowed payload size.
+500	Internal Server Error	The server encountered an unexpected condition.
+502	Bad gateway	Baserow is restarting or an unexpected outage is in progress.
+503	Service unavailable	The server could not process your request in time.
