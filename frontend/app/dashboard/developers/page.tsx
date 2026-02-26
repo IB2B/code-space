@@ -1,6 +1,5 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DevelopersTable } from "@/components/dashboard/developers-table";
 
 const BASEROW_URL = process.env.BASEROW_URL;
@@ -35,9 +34,7 @@ export default async function DevelopersPage() {
   if (data.results?.[0]?.Role?.toLowerCase() !== "admin") redirect("/dashboard");
 
   return (
-    <>
-      <DashboardHeader user={user} page="Developers" />
-      <main className="flex flex-1 flex-col gap-6 p-6">
+    <main className="flex flex-1 flex-col gap-6 p-6">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">Developers</h1>
           <p className="text-sm text-muted-foreground">
@@ -47,6 +44,5 @@ export default async function DevelopersPage() {
 
         <DevelopersTable />
       </main>
-    </>
   );
 }

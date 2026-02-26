@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
+import { ReposSection } from "@/components/dashboard/repos-section";
 
 const BASEROW_URL = process.env.BASEROW_URL;
 const BASEROW_TOKEN = process.env.BASEROW_API_TOKEN;
@@ -13,7 +13,7 @@ type SessionUser = {
   avatar?: string;
 };
 
-export default async function DashboardPage() {
+export default async function ReposPage() {
   const cookieStore = await cookies();
   const raw = cookieStore.get("session_user")?.value;
 
@@ -41,15 +41,14 @@ export default async function DashboardPage() {
   return (
     <main className="flex flex-1 flex-col gap-6 p-6">
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Hello, {user.fullName}!
-        </h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Repositories</h1>
         <p className="text-sm text-muted-foreground">
-          Here&apos;s an overview of your repositories.
+          Manage all your repositories in one place — track, organize, and
+          stay on top of your codebase effortlessly.
         </p>
       </div>
 
-      <DashboardOverview currentUser={user.fullName} isAdmin={isAdmin} />
+      <ReposSection currentUser={user.fullName} isAdmin={isAdmin} />
     </main>
   );
 }

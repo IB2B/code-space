@@ -33,7 +33,7 @@ export function DashboardHeader({
   page,
 }: {
   user: User;
-  page: string;
+  page?: string;
 }) {
   const { resolvedTheme, setTheme } = useTheme();
 
@@ -49,13 +49,15 @@ export function DashboardHeader({
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="mr-2 h-4" />
 
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbPage>{page}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+      {page && (
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbPage>{page}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      )}
 
       <div className="ml-auto flex items-center gap-1">
         <Button

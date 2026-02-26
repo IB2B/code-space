@@ -5,19 +5,17 @@ export async function GET() {
   const cookieStore = await cookies();
   const githubToken = cookieStore.get("github_token")?.value;
 
-  if (!githubToken) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github+json",
+  };
+  if (githubToken) {
+    headers.Authorization = `Bearer ${githubToken}`;
   }
 
   try {
     const res = await fetch(
       "https://api.github.com/orgs/IB2B/repos?per_page=100&sort=pushed",
-      {
-        headers: {
-          Authorization: `Bearer ${githubToken}`,
-          Accept: "application/vnd.github+json",
-        },
-      },
+      { headers },
     );
 
     if (!res.ok) {
