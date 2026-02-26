@@ -109,6 +109,7 @@ export async function GET(request: Request) {
               Email: primaryEmail,
               password_hashed: "",
               Active: true,
+              github_login: githubUser.login,
               ...(avatarFile && { pfp: [avatarFile] }),
             }),
           },
@@ -122,8 +123,13 @@ export async function GET(request: Request) {
         dbUserId = existingUser.id;
         role = existingUser["Role"] || "developer";
 
-        // Update avatar on every login
-        if (avatarFile && dbUserId) {
+        // Update avatar and github_login on every login
+        if (dbUserId) {
+          const patchBody: Record<string, unknown> = {
+            github_login: githubUser.login,
+          };
+          if (avatarFile) patchBody.pfp = [avatarFile];
+
           await fetch(
             `${BASEROW_URL}/api/database/rows/table/${USERS_TABLE_ID}/${dbUserId}/?user_field_names=true`,
             {
@@ -132,7 +138,7 @@ export async function GET(request: Request) {
                 Authorization: `Token ${BASEROW_TOKEN}`,
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify({ pfp: [avatarFile] }),
+              body: JSON.stringify(patchBody),
             },
           ).catch(() => {});
         }
@@ -150,6 +156,7 @@ export async function GET(request: Request) {
       email: primaryEmail,
       role,
       avatar: githubUser.avatar_url,
+      githubLogin: githubUser.login,
     }),
     {
       httpOnly: true,

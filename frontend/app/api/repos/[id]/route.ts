@@ -53,12 +53,16 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const { status, description, deploymentLink, imageToken, videoToken } = await req.json();
+    const { status, description, repoLink, deploymentLink, userDocs, techDocs, envVars, imageToken, videoToken } = await req.json();
 
     const rowData: Record<string, unknown> = {
       status: status ?? "",
       description: description ?? "",
+      repo_link: repoLink ?? "",
       deployment: deploymentLink ?? "",
+      user_docs: userDocs ?? "",
+      tech_docs: techDocs ?? "",
+      env_vars: envVars ?? "",
     };
 
     if (imageToken !== undefined) {

@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, X, ImagePlus, VideoIcon } from "lucide-react";
 
 export type BaserowFile = {
@@ -35,10 +36,15 @@ export type Repo = {
   description: string;
   status: string;
   contributors: string;
+  repo_link: string;
   deployment: string;
+  user_docs: string;
+  tech_docs: string;
+  env_vars: string;
   Image: BaserowFile[];
   video: BaserowFile[];
   contributorAvatar?: string | null;
+  contributorsList?: { name: string; avatar: string | null }[];
 };
 
 export function EditRepoDialog({
@@ -54,7 +60,11 @@ export function EditRepoDialog({
 }) {
   const [status, setStatus] = useState("");
   const [description, setDescription] = useState("");
+  const [repoLink, setRepoLink] = useState("");
   const [deploymentLink, setDeploymentLink] = useState("");
+  const [userDocs, setUserDocs] = useState("");
+  const [techDocs, setTechDocs] = useState("");
+  const [envVars, setEnvVars] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   // Image state: existing URL or new file or removed
@@ -73,7 +83,11 @@ export function EditRepoDialog({
     if (repo) {
       setStatus(repo.status ?? "");
       setDescription(repo.description ?? "");
+      setRepoLink(repo.repo_link ?? "");
       setDeploymentLink(repo.deployment ?? "");
+      setUserDocs(repo.user_docs ?? "");
+      setTechDocs(repo.tech_docs ?? "");
+      setEnvVars(repo.env_vars ?? "");
 
       const img = repo.Image?.[0];
       setImagePreview(img?.url ?? null);
@@ -139,7 +153,7 @@ export function EditRepoDialog({
         newVideoFile ? uploadFile(newVideoFile) : Promise.resolve(null),
       ]);
 
-      const body: Record<string, unknown> = { status, description, deploymentLink };
+      const body: Record<string, unknown> = { status, description, repoLink, deploymentLink, userDocs, techDocs, envVars };
 
       // Only send image/video tokens when changed
       if (newImageFile) {
@@ -192,7 +206,22 @@ export function EditRepoDialog({
 
           <div className="space-y-1.5">
             <Label>Contributors</Label>
-            <Input value={repo?.contributors ?? ""} readOnly className="bg-muted text-muted-foreground" />
+            <div className="flex flex-wrap gap-2 rounded-md border bg-muted p-2 min-h-9">
+              {(repo?.contributorsList ?? []).length > 0
+                ? repo!.contributorsList!.map((c) => (
+                    <div key={c.name} className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <Avatar className="h-5 w-5">
+                        {c.avatar && <AvatarImage src={c.avatar} alt={c.name} />}
+                        <AvatarFallback className="text-[8px]">
+                          {c.name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span>{c.name}</span>
+                    </div>
+                  ))
+                : <span className="text-sm text-muted-foreground">{repo?.contributors || "—"}</span>
+              }
+            </div>
           </div>
 
           {/* Editable fields */}
@@ -208,6 +237,16 @@ export function EditRepoDialog({
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-repo-link">Repository link</Label>
+            <Input
+              id="edit-repo-link"
+              placeholder="https://github.com/IB2B/your-repo"
+              value={repoLink}
+              onChange={(e) => setRepoLink(e.target.value)}
+            />
           </div>
 
           <div className="space-y-1.5">
@@ -229,6 +268,42 @@ export function EditRepoDialog({
               rows={4}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-user-docs">User documentation</Label>
+            <Textarea
+              id="edit-user-docs"
+              placeholder="How to use this project: features, setup steps, usage instructions..."
+              className="resize-none"
+              rows={4}
+              value={userDocs}
+              onChange={(e) => setUserDocs(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-tech-docs">Technical documentation</Label>
+            <Textarea
+              id="edit-tech-docs"
+              placeholder="For developers: architecture, tech stack, API endpoints, folder structure, how to contribute..."
+              className="resize-none"
+              rows={4}
+              value={techDocs}
+              onChange={(e) => setTechDocs(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-env">.env</Label>
+            <Textarea
+              id="edit-env"
+              placeholder={"DATABASE_URL=\nAPI_KEY=\nNEXT_PUBLIC_APP_URL=\n..."}
+              className="resize-none font-mono text-sm"
+              rows={4}
+              value={envVars}
+              onChange={(e) => setEnvVars(e.target.value)}
             />
           </div>
 

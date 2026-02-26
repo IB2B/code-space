@@ -61,9 +61,12 @@ export async function GET() {
       .filter((u: Record<string, unknown>) => u.username && u.Email)
       .map((u: Record<string, unknown>) => {
         const name = (u.username as string).toLowerCase();
-        const repos = allRepos.filter(
-          (r) => (r.contributors as string)?.toLowerCase() === name,
-        );
+        const repos = allRepos.filter((r) => {
+          const contribs = ((r.contributors as string) || "")
+            .split(",")
+            .map((s: string) => s.trim().toLowerCase());
+          return contribs.includes(name);
+        });
         const totalRepos = repos.length;
         const activeRepos = repos.filter((r) => r.status === "in_progress").length;
         const completedRepos = repos.filter((r) => r.status === "done").length;

@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Loader2, Pencil, Info, Trash2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { EditRepoDialog, type Repo } from "./edit-repo-dialog";
@@ -97,7 +98,6 @@ export function ReposTable({
   }, [fetchRepos, refreshKey]);
 
   useEffect(() => {
-    if (!isAdmin) return;
     fetch("/api/github/last-updated")
       .then((r) => r.json())
       .then((data) => {
@@ -106,7 +106,7 @@ export function ReposTable({
         }
       })
       .catch(() => {});
-  }, [isAdmin]);
+  }, []);
 
   const filtered = useMemo(() => {
     let result = repos;
@@ -168,24 +168,24 @@ export function ReposTable({
           <TableHeader>
             <TableRow className="bg-muted/50 hover:bg-muted/50">
               <TableHead>Name</TableHead>
+              <TableHead className="max-w-xs">Description</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Contributors</TableHead>
-              <TableHead className="max-w-xs">Description</TableHead>
               <TableHead>Deployment</TableHead>
-              {isAdmin && <TableHead>Last Updated</TableHead>}
+              <TableHead>Last Updated</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={isAdmin ? 7 : 6} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
                   <Loader2 className="mx-auto h-5 w-5 animate-spin" />
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={isAdmin ? 7 : 6} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
                   {repos.length === 0 ? "No repositories added yet." : "No repositories match your filters."}
                 </TableCell>
               </TableRow>
@@ -193,6 +193,9 @@ export function ReposTable({
               filtered.map((repo) => (
                 <TableRow key={repo.id} className="hover:bg-muted/30">
                   <TableCell className="font-medium">{repo.repo_name}</TableCell>
+                  <TableCell className="max-w-xs truncate text-muted-foreground text-sm">
+                    {repo.description || "—"}
+                  </TableCell>
                   <TableCell>
                     {repo.status ? (
                       <Badge
@@ -206,24 +209,39 @@ export function ReposTable({
                     )}
                   </TableCell>
                   <TableCell>
-                    {repo.contributors ? (
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          {repo.contributorAvatar && <AvatarImage src={repo.contributorAvatar} alt={repo.contributors} />}
-                          <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-medium">
-                            {repo.contributors.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        {repo.contributors.toLowerCase() === currentUser.toLowerCase()
-                          ? <span className="text-muted-foreground text-sm italic">You</span>
-                          : <span className="text-sm">{repo.contributors}</span>}
+                    {(repo.contributorsList ?? []).length > 0 ? (
+                      <div className="flex -space-x-2">
+                        {repo.contributorsList!.slice(0, 4).map((c) => (
+                          <Tooltip key={c.name}>
+                            <TooltipTrigger asChild>
+                              <Avatar className="h-7 w-7 border-2 border-background cursor-pointer">
+                                {c.avatar && <AvatarImage src={c.avatar} alt={c.name} />}
+                                <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-medium">
+                                  {c.name.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {c.name.toLowerCase() === currentUser.toLowerCase() ? "You" : c.name}
+                            </TooltipContent>
+                          </Tooltip>
+                        ))}
+                        {repo.contributorsList!.length > 4 && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="h-7 w-7 rounded-full border-2 border-background bg-muted flex items-center justify-center text-[10px] text-muted-foreground font-medium cursor-pointer">
+                                +{repo.contributorsList!.length - 4}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {repo.contributorsList!.slice(4).map((c) => c.name).join(", ")}
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
                       </div>
                     ) : (
                       <span className="text-muted-foreground text-sm">—</span>
                     )}
-                  </TableCell>
-                  <TableCell className="max-w-xs truncate text-muted-foreground text-sm">
-                    {repo.description || "—"}
                   </TableCell>
                   <TableCell>
                     {repo.deployment ? (
@@ -239,20 +257,18 @@ export function ReposTable({
                       <span className="text-muted-foreground text-sm">—</span>
                     )}
                   </TableCell>
-                  {isAdmin && (
-                    <TableCell>
-                      {(() => {
-                        const pushed = lastUpdatedMap[repo.repo_name.toLowerCase()];
-                        if (!pushed) return <span className="text-muted-foreground text-sm">—</span>;
-                        return (
-                          <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-                            <Clock className="h-3.5 w-3.5" />
-                            {timeAgo(pushed)}
-                          </span>
-                        );
-                      })()}
-                    </TableCell>
-                  )}
+                  <TableCell>
+                    {(() => {
+                      const pushed = lastUpdatedMap[repo.repo_name.toLowerCase()];
+                      if (!pushed) return <span className="text-muted-foreground text-sm">—</span>;
+                      return (
+                        <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5" />
+                          {timeAgo(pushed)}
+                        </span>
+                      );
+                    })()}
+                  </TableCell>
                   <TableCell className="text-right">
                     <Button
                       variant="ghost"
