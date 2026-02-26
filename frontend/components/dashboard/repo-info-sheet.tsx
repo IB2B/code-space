@@ -27,8 +27,8 @@ export function RepoInfoSheet({
 }) {
   if (!repo) return null;
 
-  const imageFile = repo.Image?.[0];
-  const videoFile = repo.video?.[0];
+  const imageFiles = repo.Image ?? [];
+  const videoFiles = repo.video ?? [];
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -132,29 +132,39 @@ export function RepoInfoSheet({
             <pre className="text-sm whitespace-pre-wrap font-mono bg-muted rounded-md p-3">{repo.env_vars || "—"}</pre>
           </div>
 
-          {/* Image */}
+          {/* Images */}
           <div className="space-y-2">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Image</p>
-            {imageFile ? (
-              <img
-                src={imageFile.url}
-                alt={repo.repo_name}
-                className="rounded-md w-full object-cover max-h-64"
-              />
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Images</p>
+            {imageFiles.length > 0 ? (
+              <div className="grid grid-cols-2 gap-2">
+                {imageFiles.map((f, i) => (
+                  <img
+                    key={i}
+                    src={f.url}
+                    alt={repo.repo_name}
+                    className="rounded-md w-full object-cover max-h-48"
+                  />
+                ))}
+              </div>
             ) : (
               <p className="text-sm text-muted-foreground">—</p>
             )}
           </div>
 
-          {/* Video */}
+          {/* Videos */}
           <div className="space-y-2">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Video</p>
-            {videoFile ? (
-              <video
-                src={videoFile.url}
-                controls
-                className="rounded-md w-full max-h-64"
-              />
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Videos</p>
+            {videoFiles.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                {videoFiles.map((f, i) => (
+                  <video
+                    key={i}
+                    src={f.url}
+                    controls
+                    className="rounded-md w-full max-h-64"
+                  />
+                ))}
+              </div>
             ) : (
               <p className="text-sm text-muted-foreground">—</p>
             )}

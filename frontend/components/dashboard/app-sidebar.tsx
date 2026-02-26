@@ -12,7 +12,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { GitFork, Users } from "lucide-react";
+import { LayoutDashboard, GitFork, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
@@ -20,7 +20,8 @@ import type { LucideIcon } from "lucide-react";
 type NavItem = { label: string; icon: LucideIcon; href: string };
 
 const baseNav: NavItem[] = [
-  { label: "Repositories", icon: GitFork, href: "/dashboard" },
+  { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+  { label: "Repositories", icon: GitFork, href: "/dashboard/repos" },
 ];
 
 const ownerNav: NavItem[] = [
@@ -49,7 +50,7 @@ export function AppSidebar({ role }: { role?: string }) {
                 <SidebarMenuItem key={item.label}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname === item.href}
+                    isActive={item.href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.href)}
                   >
                     <Link href={item.href}>
                       <item.icon />

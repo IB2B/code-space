@@ -4,6 +4,69 @@ import { cookies } from "next/headers";
 const BASEROW_URL = process.env.BASEROW_URL;
 const BASEROW_TOKEN = process.env.BASEROW_API_TOKEN;
 const REPOS_TABLE_ID = process.env.BASEROW_REPOS_TABLE_ID;
+const USERS_TABLE_ID = process.env.BASEROW_USERS_TABLE_ID;
+
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const cookieStore = await cookies();
+    const raw = cookieStore.get("session_user")?.value;
+
+    if (!raw) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    const [repoRes, usersRes] = await Promise.all([
+      fetch(
+        `${BASEROW_URL}/api/database/rows/table/${REPOS_TABLE_ID}/${id}/?user_field_names=true`,
+        { headers: { Authorization: `Token ${BASEROW_TOKEN}` }, cache: "no-store" },
+      ),
+      fetch(
+        `${BASEROW_URL}/api/database/rows/table/${USERS_TABLE_ID}/?user_field_names=true&size=200`,
+        { headers: { Authorization: `Token ${BASEROW_TOKEN}` }, cache: "no-store" },
+      ),
+    ]);
+
+    if (!repoRes.ok) {
+      return NextResponse.json({ error: "Repository not found" }, { status: 404 });
+    }
+
+    const repo = await repoRes.json();
+
+    // Build avatar map
+    const avatarMap: Record<string, string> = {};
+    if (usersRes.ok) {
+      const usersData = await usersRes.json();
+      for (const u of (usersData.results ?? []) as Record<string, unknown>[]) {
+        const pfp = u.pfp as { url: string; thumbnails?: { small?: { url: string } } }[] | undefined;
+        const url = pfp?.[0]?.thumbnails?.small?.url ?? pfp?.[0]?.url;
+        if (u.username && url) {
+          avatarMap[(u.username as string).toLowerCase()] = url;
+        }
+      }
+    }
+
+    const contribStr = (repo.contributors as string) || "";
+    const contribNames = contribStr.split(",").map((s: string) => s.trim()).filter(Boolean);
+    const contributorsList = contribNames.map((name: string) => ({
+      name,
+      avatar: avatarMap[name.toLowerCase()] ?? null,
+    }));
+
+    return NextResponse.json({
+      ...repo,
+      contributorsList,
+      contributorAvatar: contributorsList[0]?.avatar ?? null,
+    });
+  } catch (err) {
+    console.error("GET /api/repos/[id] error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
 
 export async function DELETE(
   _req: NextRequest,
@@ -53,7 +116,7 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const { status, description, repoLink, deploymentLink, userDocs, techDocs, envVars, imageToken, videoToken } = await req.json();
+    const { status, description, repoLink, deploymentLink, userDocs, techDocs, envVars, imageTokens, videoTokens } = await req.json();
 
     const rowData: Record<string, unknown> = {
       status: status ?? "",
@@ -65,11 +128,11 @@ export async function PATCH(
       env_vars: envVars ?? "",
     };
 
-    if (imageToken !== undefined) {
-      rowData.Image = imageToken ? [{ name: imageToken }] : [];
+    if (imageTokens !== undefined) {
+      rowData.Image = (imageTokens as string[]).map((t: string) => ({ name: t }));
     }
-    if (videoToken !== undefined) {
-      rowData.video = videoToken ? [{ name: videoToken }] : [];
+    if (videoTokens !== undefined) {
+      rowData.video = (videoTokens as string[]).map((t: string) => ({ name: t }));
     }
 
     const patchRes = await fetch(

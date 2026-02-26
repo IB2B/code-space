@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
 
     const sessionUser = JSON.parse(raw);
     const githubToken = cookieStore.get("github_token")?.value;
-    const { repoName, status, description, repoLink, deploymentLink, userDocs, techDocs, envVars, imageToken, videoToken } = await req.json();
+    const { repoName, status, description, repoLink, deploymentLink, userDocs, techDocs, envVars, imageTokens, videoTokens } = await req.json();
 
     if (!repoName) {
       return NextResponse.json({ error: "Repository name is required" }, { status: 400 });
@@ -199,8 +199,8 @@ export async function POST(req: NextRequest) {
       user_docs: userDocs ?? "",
       tech_docs: techDocs ?? "",
       env_vars: envVars ?? "",
-      ...(imageToken ? { Image: [{ name: imageToken }] } : {}),
-      ...(videoToken ? { video: [{ name: videoToken }] } : {}),
+      ...(imageTokens?.length ? { Image: imageTokens.map((t: string) => ({ name: t })) } : {}),
+      ...(videoTokens?.length ? { video: videoTokens.map((t: string) => ({ name: t })) } : {}),
     };
 
     console.log("[repos] Creating row with data:", JSON.stringify(rowData));

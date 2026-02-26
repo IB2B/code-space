@@ -1,10 +1,18 @@
 import { cookies } from "next/headers";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
+import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 
 const BASEROW_URL = process.env.BASEROW_URL;
 const BASEROW_TOKEN = process.env.BASEROW_API_TOKEN;
 const USERS_TABLE_ID = process.env.BASEROW_USERS_TABLE_ID;
+
+type SessionUser = {
+  fullName: string;
+  email: string;
+  role: string;
+  avatar?: string;
+};
 
 export default async function DashboardLayout({
   children,
@@ -15,9 +23,11 @@ export default async function DashboardLayout({
   const raw = cookieStore.get("session_user")?.value;
 
   let role: string | undefined;
+  let user: SessionUser | null = null;
 
   if (raw) {
     const sessionUser = JSON.parse(raw);
+    user = sessionUser;
     // Fetch role directly from Baserow using user's email
     try {
       const res = await fetch(
@@ -42,7 +52,10 @@ export default async function DashboardLayout({
   return (
     <SidebarProvider className="font-sans">
       <AppSidebar role={role} />
-      <SidebarInset>{children}</SidebarInset>
+      <SidebarInset>
+        {user && <DashboardHeader user={user} />}
+        {children}
+      </SidebarInset>
     </SidebarProvider>
   );
 }

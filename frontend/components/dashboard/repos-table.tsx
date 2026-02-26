@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -23,10 +24,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, Pencil, Info, Trash2, Clock } from "lucide-react";
+import { Loader2, Pencil, Info, Trash2, Clock, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { EditRepoDialog, type Repo } from "./edit-repo-dialog";
-import { RepoInfoSheet } from "./repo-info-sheet";
+import type { Repo } from "./edit-repo-dialog";
 import type { StatusFilter, SortField, SortDir } from "./repos-section";
 
 function timeAgo(dateStr: string): string {
@@ -74,16 +74,12 @@ export function ReposTable({
   sortDir?: SortDir;
   isAdmin?: boolean;
 }) {
+  const router = useRouter();
   const [repos, setRepos] = useState<Repo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editRepo, setEditRepo] = useState<Repo | null>(null);
-  const [editOpen, setEditOpen] = useState(false);
-  const [infoRepo, setInfoRepo] = useState<Repo | null>(null);
-  const [infoOpen, setInfoOpen] = useState(false);
+  const [lastUpdatedMap, setLastUpdatedMap] = useState<Record<string, string>>({});
   const [deleteRepo, setDeleteRepo] = useState<Repo | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [lastUpdatedMap, setLastUpdatedMap] = useState<Record<string, string>>({});
-
   const fetchRepos = useCallback(() => {
     setLoading(true);
     fetch("/api/repos")
@@ -136,11 +132,6 @@ export function ReposTable({
     return result;
   }, [repos, search, statusFilter, sortField, sortDir]);
 
-  function openEdit(repo: Repo) {
-    setEditRepo(repo);
-    setEditOpen(true);
-  }
-
   async function confirmDelete() {
     if (!deleteRepo) return;
     setDeleting(true);
@@ -171,6 +162,7 @@ export function ReposTable({
               <TableHead className="max-w-xs">Description</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Contributors</TableHead>
+              <TableHead>Repo Link</TableHead>
               <TableHead>Deployment</TableHead>
               <TableHead>Last Updated</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -179,13 +171,13 @@ export function ReposTable({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
                   <Loader2 className="mx-auto h-5 w-5 animate-spin" />
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
                   {repos.length === 0 ? "No repositories added yet." : "No repositories match your filters."}
                 </TableCell>
               </TableRow>
@@ -244,36 +236,50 @@ export function ReposTable({
                     )}
                   </TableCell>
                   <TableCell>
-                    {repo.deployment ? (
+                    {repo.repo_link ? (
                       <a
-                        href={repo.deployment}
+                        href={repo.repo_link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline text-sm truncate max-w-40 block"
+                        className="text-blue-500 hover:underline text-sm inline-flex items-center gap-1"
                       >
-                        {repo.deployment}
+                        <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                        Link
                       </a>
                     ) : (
                       <span className="text-muted-foreground text-sm">—</span>
                     )}
                   </TableCell>
                   <TableCell>
-                    {(() => {
-                      const pushed = lastUpdatedMap[repo.repo_name.toLowerCase()];
-                      if (!pushed) return <span className="text-muted-foreground text-sm">—</span>;
-                      return (
-                        <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-                          <Clock className="h-3.5 w-3.5" />
-                          {timeAgo(pushed)}
-                        </span>
-                      );
-                    })()}
+                    {repo.deployment ? (
+                      <a
+                        href={repo.deployment}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline text-sm inline-flex items-center gap-1"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                        Link
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {lastUpdatedMap[repo.repo_name.toLowerCase()] ? (
+                      <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5" />
+                        {timeAgo(lastUpdatedMap[repo.repo_name.toLowerCase()])}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => { setInfoRepo(repo); setInfoOpen(true); }}
+                      onClick={() => router.push(`/dashboard/repos/${repo.id}`)}
                     >
                       <Info className="h-4 w-4" />
                     </Button>
@@ -282,7 +288,7 @@ export function ReposTable({
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => openEdit(repo)}
+                          onClick={() => router.push(`/dashboard/repos/${repo.id}/edit`)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -302,18 +308,6 @@ export function ReposTable({
           </TableBody>
         </Table>
       </div>
-
-      <EditRepoDialog
-        repo={editRepo}
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        onSuccess={fetchRepos}
-      />
-      <RepoInfoSheet
-        repo={infoRepo}
-        open={infoOpen}
-        onOpenChange={setInfoOpen}
-      />
 
       <AlertDialog open={!!deleteRepo} onOpenChange={(open) => { if (!open) setDeleteRepo(null); }}>
         <AlertDialogContent className="font-sans">
