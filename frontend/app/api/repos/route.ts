@@ -33,51 +33,69 @@ export async function GET() {
       }
     }
 
-    // Owner sees all repos, developer sees only their own
-    const url = isOwner
-      ? `${BASEROW_URL}/api/database/rows/table/${REPOS_TABLE_ID}/?user_field_names=true&size=200`
-      : `${BASEROW_URL}/api/database/rows/table/${REPOS_TABLE_ID}/?user_field_names=true&filter__contributors__equal=${encodeURIComponent(sessionUser.fullName.toLowerCase())}`;
+    // Fetch all repos and users in parallel
+    const [reposRes, allUsersRes] = await Promise.all([
+      fetch(
+        `${BASEROW_URL}/api/database/rows/table/${REPOS_TABLE_ID}/?user_field_names=true&size=200`,
+        { headers: { Authorization: `Token ${BASEROW_TOKEN}` }, cache: "no-store" },
+      ),
+      fetch(
+        `${BASEROW_URL}/api/database/rows/table/${USERS_TABLE_ID}/?user_field_names=true&size=200`,
+        { headers: { Authorization: `Token ${BASEROW_TOKEN}` }, cache: "no-store" },
+      ),
+    ]);
 
-    const res = await fetch(url, {
-      headers: { Authorization: `Token ${BASEROW_TOKEN}` },
-      cache: "no-store",
-    });
-
-    if (!res.ok) {
-      const body = await res.text();
-      console.error("Baserow list repos error:", res.status, body);
+    if (!reposRes.ok) {
+      const body = await reposRes.text();
+      console.error("Baserow list repos error:", reposRes.status, body);
       return NextResponse.json({ error: "Failed to fetch repositories" }, { status: 500 });
     }
 
-    const data = await res.json();
-    const repos = data.results ?? [];
+    const data = await reposRes.json();
+    const allRepos = (data.results ?? []) as Record<string, unknown>[];
+
+    // For developers, filter to repos where they are a contributor
+    const currentUsername = sessionUser.fullName.toLowerCase();
+    const repos = isOwner
+      ? allRepos
+      : allRepos.filter((r) => {
+          const contribs = ((r.contributors as string) || "")
+            .split(",")
+            .map((s: string) => s.trim().toLowerCase());
+          return contribs.includes(currentUsername);
+        });
 
     // Build contributor → avatar lookup from users table
-    let avatarMap: Record<string, string> = {};
-    try {
-      const allUsersRes = await fetch(
-        `${BASEROW_URL}/api/database/rows/table/${USERS_TABLE_ID}/?user_field_names=true&size=200`,
-        {
-          headers: { Authorization: `Token ${BASEROW_TOKEN}` },
-          cache: "no-store",
-        },
-      );
-      if (allUsersRes.ok) {
-        const allUsersData = await allUsersRes.json();
-        for (const u of allUsersData.results ?? []) {
-          const pfp = u.pfp as { url: string; thumbnails?: { small?: { url: string } } }[] | undefined;
-          const url = pfp?.[0]?.thumbnails?.small?.url ?? pfp?.[0]?.url;
-          if (u.username && url) {
-            avatarMap[(u.username as string).toLowerCase()] = url;
-          }
+    const avatarMap: Record<string, string> = {};
+    if (allUsersRes.ok) {
+      const allUsersData = await allUsersRes.json();
+      for (const u of (allUsersData.results ?? []) as Record<string, unknown>[]) {
+        const pfp = u.pfp as { url: string; thumbnails?: { small?: { url: string } } }[] | undefined;
+        const url = pfp?.[0]?.thumbnails?.small?.url ?? pfp?.[0]?.url;
+        if (u.username && url) {
+          avatarMap[(u.username as string).toLowerCase()] = url;
         }
       }
-    } catch {}
+    }
 
-    const enriched = repos.map((r: Record<string, unknown>) => ({
-      ...r,
-      contributorAvatar: avatarMap[(r.contributors as string)?.toLowerCase()] ?? null,
-    }));
+    const enriched = repos.map((r: Record<string, unknown>) => {
+      const contribStr = (r.contributors as string) || "";
+      const contribNames = contribStr
+        .split(",")
+        .map((s: string) => s.trim())
+        .filter(Boolean);
+
+      const contributorsList = contribNames.map((name) => ({
+        name,
+        avatar: avatarMap[name.toLowerCase()] ?? null,
+      }));
+
+      return {
+        ...r,
+        contributorsList,
+        contributorAvatar: contributorsList[0]?.avatar ?? null,
+      };
+    });
 
     return NextResponse.json(enriched);
   } catch (err) {
@@ -96,18 +114,91 @@ export async function POST(req: NextRequest) {
     }
 
     const sessionUser = JSON.parse(raw);
-    const { repoName, status, description, deploymentLink, imageToken, videoToken } = await req.json();
+    const githubToken = cookieStore.get("github_token")?.value;
+    const { repoName, status, description, repoLink, deploymentLink, userDocs, techDocs, envVars, imageToken, videoToken } = await req.json();
 
     if (!repoName) {
       return NextResponse.json({ error: "Repository name is required" }, { status: 400 });
     }
 
+    // Check for duplicate repo name
+    const dupeCheckRes = await fetch(
+      `${BASEROW_URL}/api/database/rows/table/${REPOS_TABLE_ID}/?user_field_names=true&filter__repo_name__equal=${encodeURIComponent(repoName)}`,
+      { headers: { Authorization: `Token ${BASEROW_TOKEN}` }, cache: "no-store" },
+    );
+    if (dupeCheckRes.ok) {
+      const dupeData = await dupeCheckRes.json();
+      if (dupeData.count > 0) {
+        return NextResponse.json(
+          { error: "This repository has already been added." },
+          { status: 409 },
+        );
+      }
+    }
+
+    // Fetch GitHub contributors and match to Baserow users
+    let contributorUsernames: string[] = [];
+
+    if (githubToken) {
+      try {
+        // Fetch all Baserow users to build github_login → username map
+        const allUsersRes = await fetch(
+          `${BASEROW_URL}/api/database/rows/table/${USERS_TABLE_ID}/?user_field_names=true&size=200`,
+          { headers: { Authorization: `Token ${BASEROW_TOKEN}` }, cache: "no-store" },
+        );
+        const loginToUsername: Record<string, string> = {};
+        if (allUsersRes.ok) {
+          const allUsersData = await allUsersRes.json();
+          for (const u of (allUsersData.results ?? []) as Record<string, unknown>[]) {
+            const ghLogin = u.github_login as string | undefined;
+            const uname = u.username as string | undefined;
+            if (ghLogin && uname) {
+              loginToUsername[ghLogin.toLowerCase()] = uname.toLowerCase();
+            }
+          }
+        }
+
+        // Fetch contributors from GitHub
+        const ghRes = await fetch(
+          `https://api.github.com/repos/IB2B/${encodeURIComponent(repoName)}/contributors?per_page=100`,
+          {
+            headers: {
+              Authorization: `Bearer ${githubToken}`,
+              Accept: "application/vnd.github+json",
+            },
+          },
+        );
+        if (ghRes.ok) {
+          const ghContributors = (await ghRes.json()) as { login: string }[];
+          for (const c of ghContributors) {
+            const login = c.login?.toLowerCase();
+            if (login && loginToUsername[login]) {
+              contributorUsernames.push(loginToUsername[login]);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("[repos] Failed to fetch GitHub contributors:", err);
+      }
+    }
+
+    // Always include the current user
+    const currentUsername = sessionUser.fullName.toLowerCase();
+    if (!contributorUsernames.includes(currentUsername)) {
+      contributorUsernames.push(currentUsername);
+    }
+    contributorUsernames = [...new Set(contributorUsernames)];
+
     const rowData = {
       repo_name: repoName,
       description: description ?? "",
       status: status ?? "",
-      contributors: sessionUser.fullName.toLowerCase(),
+      contributors: contributorUsernames.join(","),
+      repo_link: repoLink ?? "",
       deployment: deploymentLink ?? "",
+      user_docs: userDocs ?? "",
+      tech_docs: techDocs ?? "",
+      env_vars: envVars ?? "",
       ...(imageToken ? { Image: [{ name: imageToken }] } : {}),
       ...(videoToken ? { video: [{ name: videoToken }] } : {}),
     };
