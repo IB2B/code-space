@@ -23,6 +23,7 @@ export async function GET(request: Request) {
     body: new URLSearchParams({
       client_id: process.env.GITHUB_CLIENT_ID!,
       client_secret: process.env.GITHUB_CLIENT_SECRET!,
+      redirect_uri: `${process.env.APP_URL}/api/auth/callback`,
       code,
     }),
   });

@@ -13,6 +13,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { LayoutDashboard, GitFork, Users } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
@@ -36,8 +37,12 @@ export function AppSidebar({ role }: { role?: string }) {
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="px-3 py-2">
-          <span className="font-semibold text-sm tracking-tight">IB2B</span>
+        <div className="flex items-center gap-3 px-4 py-4 border-b border-sidebar-border">
+          <Image src="/logo.png" alt="Logo" width={36} height={36} className="rounded-lg shadow-sm" />
+          <div className="flex flex-col leading-tight">
+            <span className="font-bold text-base tracking-tight text-sidebar-foreground">B2B/CodeSpace</span>
+            <span className="text-xs text-muted-foreground">Developer Portal</span>
+          </div>
         </div>
       </SidebarHeader>
 
