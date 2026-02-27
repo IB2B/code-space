@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTheme } from "next-themes";
+import { Moon, Sun } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +12,7 @@ import { loginUser } from "@/services/authService";
 
 export function LoginForm() {
   const searchParams = useSearchParams();
+  const { resolvedTheme, setTheme } = useTheme();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,7 +48,18 @@ export function LoginForm() {
   };
 
   return (
-    <div className="flex h-screen w-full items-center font-sans tracking-tighter justify-center bg-white">
+    <div className="flex h-screen w-full items-center font-sans tracking-tighter justify-center bg-background">
+      <div className="absolute top-4 right-4">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+        >
+          {resolvedTheme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          <span className="sr-only">Toggle theme</span>
+        </Button>
+      </div>
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-1 px-4">
         <div className="text-center">
           <h1 className="text-lg font-medium tracking-tight">Welcome Back!</h1>
@@ -78,7 +92,7 @@ export function LoginForm() {
               id="email"
               placeholder="you@example.com"
               type="email"
-              className="bg-muted"
+              className="bg-muted text-foreground"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -92,7 +106,7 @@ export function LoginForm() {
               id="password"
               placeholder="••••••••"
               type="password"
-              className="bg-muted"
+              className="bg-muted text-foreground"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
