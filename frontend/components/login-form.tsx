@@ -14,9 +14,12 @@ export function LoginForm() {
   const searchParams = useSearchParams();
   const { resolvedTheme, setTheme } = useTheme();
 
+  const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     const error = searchParams.get("error");
@@ -56,7 +59,7 @@ export function LoginForm() {
           size="icon"
           onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
         >
-          {resolvedTheme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          {mounted && (resolvedTheme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />)}
           <span className="sr-only">Toggle theme</span>
         </Button>
       </div>

@@ -27,9 +27,6 @@ export function RepoInfoSheet({
 }) {
   if (!repo) return null;
 
-  const imageFiles = repo.Image ?? [];
-  const videoFiles = repo.video ?? [];
-
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="font-sans w-full sm:max-w-lg flex flex-col">
@@ -114,6 +111,23 @@ export function RepoInfoSheet({
             )}
           </div>
 
+          {/* Demo Link */}
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Demo link</p>
+            {repo.demo_link ? (
+              <a
+                href={repo.demo_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-500 hover:underline break-all"
+              >
+                {repo.demo_link}
+              </a>
+            ) : (
+              <p className="text-sm text-muted-foreground">—</p>
+            )}
+          </div>
+
           {/* User Documentation */}
           <div className="space-y-1">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">User documentation</p>
@@ -132,43 +146,6 @@ export function RepoInfoSheet({
             <pre className="text-sm whitespace-pre-wrap font-mono bg-muted rounded-md p-3">{repo.env_vars || "—"}</pre>
           </div>
 
-          {/* Images */}
-          <div className="space-y-2">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Images</p>
-            {imageFiles.length > 0 ? (
-              <div className="grid grid-cols-2 gap-2">
-                {imageFiles.map((f, i) => (
-                  <img
-                    key={i}
-                    src={f.url}
-                    alt={repo.repo_name}
-                    className="rounded-md w-full object-cover max-h-48"
-                  />
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">—</p>
-            )}
-          </div>
-
-          {/* Videos */}
-          <div className="space-y-2">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Videos</p>
-            {videoFiles.length > 0 ? (
-              <div className="flex flex-col gap-2">
-                {videoFiles.map((f, i) => (
-                  <video
-                    key={i}
-                    src={f.url}
-                    controls
-                    className="rounded-md w-full max-h-64"
-                  />
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">—</p>
-            )}
-          </div>
         </div>
       </SheetContent>
     </Sheet>
