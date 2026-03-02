@@ -24,10 +24,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, Pencil, Info, Trash2, Clock, ExternalLink } from "lucide-react";
+import { Loader2, Pencil, Info, Trash2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import type { Repo } from "./edit-repo-dialog";
 import type { StatusFilter, SortField, SortDir } from "./repos-section";
+
+function stripProtocol(url: string): string {
+  return url.replace(/^https?:\/\//, "");
+}
 
 function timeAgo(dateStr: string): string {
   const now = Date.now();
@@ -164,6 +168,7 @@ export function ReposTable({
               <TableHead>Contributors</TableHead>
               <TableHead>Repo Link</TableHead>
               <TableHead>Deployment</TableHead>
+              <TableHead>Demo</TableHead>
               <TableHead>Last Updated</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -171,13 +176,13 @@ export function ReposTable({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">
                   <Loader2 className="mx-auto h-5 w-5 animate-spin" />
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">
                   {repos.length === 0 ? "No repositories added yet." : "No repositories match your filters."}
                 </TableCell>
               </TableRow>
@@ -235,31 +240,43 @@ export function ReposTable({
                       <span className="text-muted-foreground text-sm">—</span>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="max-w-36">
                     {repo.repo_link ? (
                       <a
                         href={repo.repo_link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline text-sm inline-flex items-center gap-1"
+                        className="block overflow-hidden text-blue-500 hover:text-blue-400 text-sm mask-[linear-gradient(to_right,black_55%,transparent_100%)] whitespace-nowrap"
                       >
-                        <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-                        Link
+                        {stripProtocol(repo.repo_link)}
                       </a>
                     ) : (
                       <span className="text-muted-foreground text-sm">—</span>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="max-w-36">
                     {repo.deployment ? (
                       <a
                         href={repo.deployment}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline text-sm inline-flex items-center gap-1"
+                        className="block overflow-hidden text-blue-500 hover:text-blue-400 text-sm mask-[linear-gradient(to_right,black_55%,transparent_100%)] whitespace-nowrap"
                       >
-                        <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-                        Link
+                        {stripProtocol(repo.deployment)}
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="max-w-36">
+                    {repo.demo_link ? (
+                      <a
+                        href={repo.demo_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block overflow-hidden text-blue-500 hover:text-blue-400 text-sm mask-[linear-gradient(to_right,black_55%,transparent_100%)] whitespace-nowrap"
+                      >
+                        {stripProtocol(repo.demo_link)}
                       </a>
                     ) : (
                       <span className="text-muted-foreground text-sm">—</span>

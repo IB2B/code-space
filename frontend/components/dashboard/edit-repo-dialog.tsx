@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,16 +9,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -27,15 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, X, ImagePlus, VideoIcon } from "lucide-react";
-
-export type BaserowFile = {
-  url: string;
-  thumbnail_url: string;
-  name: string;
-  mime_type: string;
-  is_image: boolean;
-};
+import { Loader2 } from "lucide-react";
 
 export type Repo = {
   id: number;
@@ -45,27 +30,14 @@ export type Repo = {
   contributors: string;
   repo_link: string;
   deployment: string;
+  demo_link: string;
   user_docs: string;
   tech_docs: string;
   env_vars: string;
-  Image: BaserowFile[];
-  video: BaserowFile[];
   contributorAvatar?: string | null;
   contributorsList?: { name: string; avatar: string | null }[];
 };
 
-type MediaItem = { type: "existing"; url: string; name: string } | { type: "new"; file: File; preview: string; name: string };
-
-type PreviewItem = { type: "image" | "video"; url: string; name: string };
-
-function truncateName(name: string, max = 20): string {
-  if (name.length <= max) return name;
-  const ext = name.lastIndexOf(".") !== -1 ? name.slice(name.lastIndexOf(".")) : "";
-  const base = name.slice(0, name.length - ext.length);
-  const keep = max - ext.length - 3;
-  if (keep <= 0) return name.slice(0, max - 3) + "...";
-  return base.slice(0, keep) + "..." + ext;
-}
 
 export function EditRepoDialog({
   repo,
@@ -82,20 +54,11 @@ export function EditRepoDialog({
   const [description, setDescription] = useState("");
   const [repoLink, setRepoLink] = useState("");
   const [deploymentLink, setDeploymentLink] = useState("");
+  const [demoLink, setDemoLink] = useState("");
   const [userDocs, setUserDocs] = useState("");
   const [techDocs, setTechDocs] = useState("");
   const [envVars, setEnvVars] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
-  const [images, setImages] = useState<MediaItem[]>([]);
-  const [videos, setVideos] = useState<MediaItem[]>([]);
-  const [imagesChanged, setImagesChanged] = useState(false);
-  const [videosChanged, setVideosChanged] = useState(false);
-
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
-
-  const [preview, setPreview] = useState<PreviewItem | null>(null);
 
   useEffect(() => {
     if (repo) {
@@ -103,106 +66,21 @@ export function EditRepoDialog({
       setDescription(repo.description ?? "");
       setRepoLink(repo.repo_link ?? "");
       setDeploymentLink(repo.deployment ?? "");
+      setDemoLink(repo.demo_link ?? "");
       setUserDocs(repo.user_docs ?? "");
       setTechDocs(repo.tech_docs ?? "");
       setEnvVars(repo.env_vars ?? "");
-
-      setImages(
-        (repo.Image ?? []).map((f) => ({ type: "existing" as const, url: f.url, name: f.name }))
-      );
-      setVideos(
-        (repo.video ?? []).map((f) => ({ type: "existing" as const, url: f.url, name: f.name }))
-      );
-      setImagesChanged(false);
-      setVideosChanged(false);
-      setPreview(null);
     }
   }, [repo]);
-
-  function addImages(files: FileList | null) {
-    if (!files) return;
-    const items: MediaItem[] = Array.from(files).map((f) => ({
-      type: "new" as const,
-      file: f,
-      preview: URL.createObjectURL(f),
-      name: f.name,
-    }));
-    setImages((prev) => [...prev, ...items]);
-    setImagesChanged(true);
-  }
-
-  function removeImage(index: number) {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-    setImagesChanged(true);
-  }
-
-  function addVideos(files: FileList | null) {
-    if (!files) return;
-    const items: MediaItem[] = Array.from(files).map((f) => ({
-      type: "new" as const,
-      file: f,
-      preview: URL.createObjectURL(f),
-      name: f.name,
-    }));
-    setVideos((prev) => [...prev, ...items]);
-    setVideosChanged(true);
-  }
-
-  function removeVideo(index: number) {
-    setVideos((prev) => prev.filter((_, i) => i !== index));
-    setVideosChanged(true);
-  }
-
-  function getMediaUrl(item: MediaItem): string {
-    return item.type === "existing" ? item.url : item.preview;
-  }
 
   async function handleSubmit() {
     if (!repo) return;
     setSubmitting(true);
     try {
-      async function uploadFile(file: File): Promise<string> {
-        const form = new FormData();
-        form.append("file", file);
-        const r = await fetch("/api/upload", { method: "POST", body: form });
-        if (!r.ok) {
-          const d = await r.json().catch(() => ({}));
-          throw new Error(d.error ?? `Upload failed (${r.status})`);
-        }
-        const d = await r.json();
-        return d.name as string;
-      }
-
-      const body: Record<string, unknown> = { status, description, repoLink, deploymentLink, userDocs, techDocs, envVars };
-
-      if (imagesChanged) {
-        const imageTokens: string[] = [];
-        for (const img of images) {
-          if (img.type === "existing") {
-            imageTokens.push(img.name);
-          } else {
-            imageTokens.push(await uploadFile(img.file));
-          }
-        }
-        body.imageTokens = imageTokens;
-      }
-
-      if (videosChanged) {
-        const videoTokens: string[] = [];
-        for (const vid of videos) {
-          if (vid.type === "existing") {
-            videoTokens.push(vid.name);
-          } else {
-            videoTokens.push(await uploadFile(vid.file));
-          }
-        }
-        body.videoTokens = videoTokens;
-      }
-
       const res = await fetch(`/api/repos/${repo.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ status, description, repoLink, deploymentLink, demoLink, userDocs, techDocs, envVars }),
       });
 
       if (!res.ok) {
@@ -292,6 +170,16 @@ export function EditRepoDialog({
             </div>
 
             <div className="space-y-1.5">
+              <Label htmlFor="edit-demo-link">Demo link</Label>
+              <Input
+                id="edit-demo-link"
+                placeholder="https://demo.your-app.com"
+                value={demoLink}
+                onChange={(e) => setDemoLink(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1.5">
               <Label htmlFor="edit-description">Description</Label>
               <Textarea
                 id="edit-description"
@@ -339,95 +227,6 @@ export function EditRepoDialog({
               />
             </div>
 
-            {/* Images */}
-            <div className="space-y-2">
-              <Label>Images</Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => imageInputRef.current?.click()}
-              >
-                <ImagePlus className="mr-2 h-4 w-4" />
-                Add images
-              </Button>
-              {images.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {images.map((img, i) => (
-                    <Badge
-                      key={i}
-                      variant="secondary"
-                      className="gap-1.5 pr-1 cursor-pointer hover:bg-secondary/80"
-                      onClick={() => setPreview({ type: "image", url: getMediaUrl(img), name: img.name })}
-                    >
-                      <ImagePlus className="h-3 w-3 shrink-0" />
-                      <span className="max-w-30 truncate">{truncateName(img.name)}</span>
-                      <button
-                        type="button"
-                        className="ml-0.5 rounded-full p-0.5 hover:bg-destructive/20 hover:text-destructive transition-colors"
-                        onClick={(e) => { e.stopPropagation(); removeImage(i); }}
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
-              <input
-                ref={imageInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={(e) => { addImages(e.target.files); e.target.value = ""; }}
-              />
-            </div>
-
-            {/* Videos */}
-            <div className="space-y-2">
-              <Label>Videos</Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => videoInputRef.current?.click()}
-              >
-                <VideoIcon className="mr-2 h-4 w-4" />
-                Add videos
-              </Button>
-              {videos.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {videos.map((vid, i) => (
-                    <Badge
-                      key={i}
-                      variant="secondary"
-                      className="gap-1.5 pr-1 cursor-pointer hover:bg-secondary/80"
-                      onClick={() => setPreview({ type: "video", url: getMediaUrl(vid), name: vid.name })}
-                    >
-                      <VideoIcon className="h-3 w-3 shrink-0" />
-                      <span className="max-w-30 truncate">{truncateName(vid.name)}</span>
-                      <button
-                        type="button"
-                        className="ml-0.5 rounded-full p-0.5 hover:bg-destructive/20 hover:text-destructive transition-colors"
-                        onClick={(e) => { e.stopPropagation(); removeVideo(i); }}
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
-              <input
-                ref={videoInputRef}
-                type="file"
-                accept="video/*"
-                multiple
-                className="hidden"
-                onChange={(e) => { addVideos(e.target.files); e.target.value = ""; }}
-              />
-            </div>
           </div>
 
           <div className="pt-4 border-t px-6 pb-6">
@@ -442,23 +241,6 @@ export function EditRepoDialog({
           </div>
         </SheetContent>
       </Sheet>
-
-      {/* Preview modal */}
-      <Dialog open={!!preview} onOpenChange={(v) => !v && setPreview(null)}>
-        <DialogContent className="sm:max-w-2xl font-sans p-0 overflow-hidden">
-          <DialogHeader className="p-4 pb-0">
-            <DialogTitle className="truncate text-sm">{preview?.name}</DialogTitle>
-          </DialogHeader>
-          <div className="p-4 pt-2">
-            {preview?.type === "image" && (
-              <img src={preview.url} alt={preview.name} className="w-full rounded-md object-contain max-h-[70vh]" />
-            )}
-            {preview?.type === "video" && (
-              <video src={preview.url} controls autoPlay className="w-full rounded-md max-h-[70vh]" />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
