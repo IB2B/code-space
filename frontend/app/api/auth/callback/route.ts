@@ -45,6 +45,18 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/login?error=oauth_failed", request.url));
   }
 
+  // Check organization membership
+  const org = process.env.GITHUB_ORGANIZATION;
+  if (org) {
+    const memberRes = await fetch(
+      `https://api.github.com/orgs/${org}/members/${githubUser.login}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    );
+    if (memberRes.status !== 204) {
+      return NextResponse.redirect(new URL("/login?error=not_member", request.url));
+    }
+  }
+
   // Fetch primary verified email (public profile email may be null)
   const emailsRes = await fetch("https://api.github.com/user/emails", {
     headers: { Authorization: `Bearer ${accessToken}` },
