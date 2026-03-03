@@ -146,7 +146,7 @@ export async function PATCH(request: Request) {
     // Update session cookie with new values
     const updatedSession = {
       ...sessionUser,
-      ...(patch.username && { fullName: patch.username }),
+      ...(typeof patch.username === "string" && { fullName: patch.username }),
       ...(newAvatarUrl && { avatar: newAvatarUrl }),
     };
 
