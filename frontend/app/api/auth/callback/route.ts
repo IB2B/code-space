@@ -45,7 +45,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/login?error=oauth_failed", request.url));
   }
 
-  // Fetch primary verified email (public profile email may be null)
+// Fetch primary verified email (public profile email may be null)
   const emailsRes = await fetch("https://api.github.com/user/emails", {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -95,7 +95,7 @@ export async function GET(request: Request) {
       const checkData = await checkRes.json();
 
       if (checkData.count === 0) {
-        // First login — create user
+        // First login — create user as inactive (admin must activate)
         const createRes = await fetch(
           `${BASEROW_URL}/api/database/rows/table/${USERS_TABLE_ID}/?user_field_names=true`,
           {
@@ -109,7 +109,7 @@ export async function GET(request: Request) {
               Role: "developer",
               Email: primaryEmail,
               password_hashed: "",
-              Active: true,
+              active: true,
               github_login: githubUser.login,
               ...(avatarFile && { pfp: [avatarFile] }),
             }),
@@ -123,6 +123,11 @@ export async function GET(request: Request) {
         const existingUser = checkData.results[0];
         dbUserId = existingUser.id;
         role = existingUser["Role"] || "developer";
+
+        // Block inactive users
+        if (existingUser["active"] === false) {
+          return NextResponse.redirect(new URL("/login?error=not_active", request.url));
+        }
 
         // Update avatar and github_login on every login
         if (dbUserId) {

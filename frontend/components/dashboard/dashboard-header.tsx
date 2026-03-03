@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Breadcrumb,
@@ -98,13 +98,11 @@ export function DashboardHeader({
             <DropdownMenuItem
               className="text-destructive cursor-pointer"
               onClick={() => {
-                document.cookie =
-                  "session_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-                document.cookie =
-                  "github_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-                window.location.href = "/login";
+                fetch("/api/auth/logout", { method: "POST", redirect: "follow" })
+                  .then(() => { window.location.href = "/login"; });
               }}
             >
+              <LogOut className="h-4 w-4 mr-2" />
               Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>

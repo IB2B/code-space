@@ -25,6 +25,8 @@ export function LoginForm() {
     const error = searchParams.get("error");
     if (error === "not_owner" || error === "not_member") {
       toast.error("Access denied. You must be a member of the organization.");
+    } else if (error === "not_active") {
+      toast.error("Your account is pending admin approval. Please contact an administrator.");
     } else if (error === "oauth_failed") {
       toast.error("GitHub login failed. Please try again.");
     }
