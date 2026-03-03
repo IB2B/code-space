@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git add frontend/app/api/auth/callback/route.ts frontend/app/api/auth/login/route.ts frontend/app/page.tsx frontend/components/dashboard/app-sidebar.tsx frontend/components/ui/button.tsx frontend/public/logo.png)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\(''id'',''''\\), d.get\\(''name'',''''\\), d.get\\(''status'',{}\\).get\\(''status'',''''\\)\\)\")"
     ]
   }
 }

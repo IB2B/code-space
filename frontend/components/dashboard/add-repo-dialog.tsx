@@ -351,24 +351,20 @@ export function AddRepoDialog({ onSuccess }: { onSuccess?: () => void }) {
           {step === 1 && (
             <>
               <div className="space-y-1.5">
-                <Label htmlFor="repo-user-docs">User documentation <span className="text-destructive">*</span></Label>
-                <Textarea
+                <Label htmlFor="repo-user-docs">User documentation link <span className="text-destructive">*</span></Label>
+                <Input
                   id="repo-user-docs"
-                  placeholder="How to use this project: features, setup steps, usage instructions..."
-                  className="resize-none"
-                  rows={4}
+                  placeholder="https://docs.example.com/user-guide"
                   value={userDocs}
                   onChange={(e) => setUserDocs(e.target.value)}
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="repo-tech-docs">Technical documentation <span className="text-destructive">*</span></Label>
-                <Textarea
+                <Label htmlFor="repo-tech-docs">Technical documentation link <span className="text-destructive">*</span></Label>
+                <Input
                   id="repo-tech-docs"
-                  placeholder="For developers: architecture, tech stack, API endpoints, folder structure, how to contribute..."
-                  className="resize-none"
-                  rows={4}
+                  placeholder="https://docs.example.com/technical"
                   value={techDocs}
                   onChange={(e) => setTechDocs(e.target.value)}
                 />

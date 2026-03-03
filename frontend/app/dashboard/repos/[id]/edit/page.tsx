@@ -196,24 +196,20 @@ export default function RepoEditPage() {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="edit-user-docs">User documentation</Label>
-          <Textarea
+          <Label htmlFor="edit-user-docs">User documentation link</Label>
+          <Input
             id="edit-user-docs"
-            placeholder="How to use this project: features, setup steps, usage instructions..."
-            className="resize-none"
-            rows={5}
+            placeholder="https://docs.example.com/user-guide"
             value={userDocs}
             onChange={(e) => setUserDocs(e.target.value)}
           />
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="edit-tech-docs">Technical documentation</Label>
-          <Textarea
+          <Label htmlFor="edit-tech-docs">Technical documentation link</Label>
+          <Input
             id="edit-tech-docs"
-            placeholder="For developers: architecture, tech stack, API endpoints, folder structure, how to contribute..."
-            className="resize-none"
-            rows={5}
+            placeholder="https://docs.example.com/technical"
             value={techDocs}
             onChange={(e) => setTechDocs(e.target.value)}
           />
