@@ -80,6 +80,7 @@ export async function GET() {
           username: u.username,
           email: u.Email,
           role: u.Role,
+          active: u.active as boolean,
           avatar,
           totalRepos,
           activeRepos,
