@@ -131,13 +131,35 @@ export function RepoInfoSheet({
           {/* User Documentation */}
           <div className="space-y-1">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">User documentation</p>
-            <p className="text-sm whitespace-pre-wrap">{repo.user_docs || "—"}</p>
+            {repo.user_docs ? (
+              <a
+                href={repo.user_docs}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-500 hover:underline break-all"
+              >
+                {repo.user_docs}
+              </a>
+            ) : (
+              <p className="text-sm text-muted-foreground">—</p>
+            )}
           </div>
 
           {/* Technical Documentation */}
           <div className="space-y-1">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Technical documentation</p>
-            <p className="text-sm whitespace-pre-wrap">{repo.tech_docs || "—"}</p>
+            {repo.tech_docs ? (
+              <a
+                href={repo.tech_docs}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-500 hover:underline break-all"
+              >
+                {repo.tech_docs}
+              </a>
+            ) : (
+              <p className="text-sm text-muted-foreground">—</p>
+            )}
           </div>
 
           {/* Environment Variables */}

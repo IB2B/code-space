@@ -165,12 +165,36 @@ export default function RepoDetailPage() {
 
         {/* User Documentation */}
         <Section label="User documentation">
-          <p className="text-sm whitespace-pre-wrap leading-relaxed">{repo.user_docs || "—"}</p>
+          {repo.user_docs ? (
+            <a
+              href={repo.user_docs}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-blue-500 hover:underline break-all inline-flex items-center gap-1.5"
+            >
+              {repo.user_docs}
+              <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+            </a>
+          ) : (
+            <Muted>—</Muted>
+          )}
         </Section>
 
         {/* Technical Documentation */}
         <Section label="Technical documentation">
-          <p className="text-sm whitespace-pre-wrap leading-relaxed">{repo.tech_docs || "—"}</p>
+          {repo.tech_docs ? (
+            <a
+              href={repo.tech_docs}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-blue-500 hover:underline break-all inline-flex items-center gap-1.5"
+            >
+              {repo.tech_docs}
+              <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+            </a>
+          ) : (
+            <Muted>—</Muted>
+          )}
         </Section>
 
         {/* Environment Variables */}
