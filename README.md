@@ -46,7 +46,7 @@ A full-stack developer portal for managing repositories and developers within an
 | Language       | TypeScript 5                        |
 | Database       | Baserow (self-hosted)               |
 | Authentication | GitHub OAuth + Email/Password       |
-| Styling        | Tailwind CSS 4 + shadcn/ui          |
+| Styling        | Tailwind CSS 4           |
 | Charts         | Recharts                            |
 | Icons          | Lucide React                        |
 | HTTP Client    | Axios                               |
@@ -75,7 +75,7 @@ frontend/
 │   └── overview/               # Overview page
 ├── components/
 │   ├── dashboard/              # Dashboard-specific components
-│   ├── ui/                     # shadcn UI components
+│   ├── ui/                     # UI components
 │   └── theme/                  # Theme provider
 ├── services/                   # API client services
 ├── hooks/                      # Custom React hooks
